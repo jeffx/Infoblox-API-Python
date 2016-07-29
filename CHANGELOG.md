@@ -1,6 +1,10 @@
 Infoblox Python API CHANGELOG
 =============================
 
+1.4.0
+-----
+* [Ryan Back] - Add retrieval of A record and CNAME by FQDN.
+
 1.3.1
 ----
 

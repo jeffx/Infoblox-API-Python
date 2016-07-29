@@ -56,6 +56,9 @@ class Infoblox(object):
     delete_host_record
     add_host_alias
     delete_host_alias
+    get_a_record_by_ip
+    get_a_record_by_fqdn
+    get_cname_record
     create_cname_record
     delete_cname_record
     update_cname_record
@@ -196,6 +199,37 @@ class Infoblox(object):
             raise InfobloxGeneralException("Failed to create "
                                            "host record for [%s]" % (address))
         return r_json['ipv4addrs'][0]['ipv4addr']
+
+    def get_cname_record(self, fqdn):
+        """ Retrieves a CNAME record by FQDN
+        :param fqdn: hostname in FQDN
+        """
+
+        # canonical instead of name?
+        rest_url = "{}/record:cname?name={}".format(self.base_url, fqdn)
+        try:
+            r = self.session.get(url=rest_url)
+            r_json = r.json()
+            if r.status_code == 200:
+                if len(r_json) > 0:
+                    cname_ref = r_json[0]['_ref']
+                    if cname_ref and re.match("record:cname\/[^:]+:([^\/]+)\/", cname_ref).group(1) == fqdn:
+                        return r_json[0]
+                    else:
+                        raise InfobloxGeneralException(
+                            "Received unexpected cname record  reference: " + cname_ref)
+                else:
+                    raise InfobloxNotFoundException(
+                        "No requested cname record found: " + fqdn)
+            else:
+                if 'text' in r_json:
+                    raise InfobloxGeneralException(r_json['text'])
+                else:
+                    r.raise_for_status()
+        except ValueError:
+            raise Exception(r)
+        except Exception:
+            raise
 
     def create_txt_record(self, text, fqdn):
         """ Implements IBA REST API call to create IBA txt record
@@ -1222,21 +1256,53 @@ class Infoblox(object):
         except Exception:
             raise
 
-    def get_a_record_by_ip(self, name, fields=None, notFoundFail=True):
-        """get_a_record_by_ip
+    def get_a_record_by_ip(self, ipaddr, fields=None, not_found_fail=True):
+        """Retrieve A record by IP Address
         :param ipaddr: IP address for which we want information
-        :param return_fields: Comma-separated list of fields to return.
+        :param fields: comma-separated list of field names (optional)
+        :param not_found_fail: Raise an exception if nothing is found.
         """
 
         r_json = self.util.get('record:a',
                                query_params={
-                                   'name': name
+                                   'ipv4addr': ipaddr
                                },
                                fields=fields,
-                               notFoundText="No A record found: " + name,
-                               notFoundFail=notFoundFail
+                               notFoundText="No A record found: " + ipaddr,
+                               notFoundFail=not_found_fail
                                )
         return r_json
+
+    def get_a_record_by_fqdn(self, fqdn):
+        """Retrieve A record by FQDN
+        :param fqdn: FQDN for which we want information
+        """
+
+        # canonical instead of name?
+        rest_url = "{}/record:a?name={}".format(self.base_url, fqdn)
+        try:
+            r = self.session.get(url=rest_url)
+            r_json = r.json()
+            if r.status_code == 200:
+                if len(r_json) > 0:
+                    a_ref = r_json[0]['_ref']
+                    if a_ref and re.match("record:a\/[^:]+:([^\/]+)\/", a_ref).group(1) == fqdn:
+                        return r_json[0]
+                    else:
+                        raise InfobloxGeneralException(
+                            "Received unexpected A record  reference: " + a_ref)
+                else:
+                    raise InfobloxNotFoundException(
+                        "No requested A record found: " + fqdn)
+            else:
+                if 'text' in r_json:
+                    raise InfobloxGeneralException(r_json['text'])
+                else:
+                    r.raise_for_status()
+        except ValueError:
+            raise Exception(r)
+        except Exception:
+            raise
 
     def update_record(self, record, fields, confirm):
         self.util.put(record, fields, confirm)
