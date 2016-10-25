@@ -161,45 +161,50 @@ class Infoblox(object):
                 else:
                     r.raise_for_status()
         except ValueError:
-            raise Exception(r)
-        except Exception:
-            raise
+            raise InfobloxGeneralException(r)
 
     def create_host_record(self, address, fqdn, payload=None):
-        """ Implements IBA REST API call to create IBA host record
+        """Create a host record given an address and an FQDN.
+
         Returns IP v4 address assigned to the host
-        :param address: IP v4 address or NET v4 address in CIDR format
-        :param fqdn: hostname in FQDN
-        :return: next available ip
+        :param str address: IP v4 address or NET v4 address in CIDR format
+        :param str fqdn: hostname in FQDN
+        :return: IP addresss given to the host
+        :rtype: str
         """
-        # CIDR
-        if re.match("^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+\/[0-9]+$", address):
-            ipv4addr = 'func:nextavailableip:' + address
+        cidr_address = '^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+\/[0-9]+$'
+        address_range = ('^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+'
+                         '-[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$')
+        static_address = '^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$'
 
-        # range
-        elif re.match("^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+-[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$", address):
+        if re.match(cidr_address, address):
             ipv4addr = 'func:nextavailableip:' + address
-
-        # static
-        elif re.match("^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$", address):
+        elif re.match(address_range, address):
+            ipv4addr = 'func:nextavailableip:' + address
+        elif re.match(static_address, address):
             ipv4addr = address
-
         else:
-            raise InfobloxBadInputParameter(
-                'Expected IP or NET address in CIDR format')
+            raise InfobloxBadInputParameter('Expected IP or NET address in '
+                                            'CIDR format, an address range, '
+                                            'or a static address.')
 
         if payload is None:
-            payload = {'name': fqdn,
-                       'view': self.iba_dns_view,
-                       'ipv4addrs': [{'ipv4addr': ipv4addr,
-                                      'configure_for_dhcp': False,
-                                      }]}
+            payload = {
+                'name': fqdn,
+                'view': self.iba_dns_view,
+                'ipv4addrs': [
+                    {
+                        'ipv4addr': ipv4addr,
+                        'configure_for_dhcp': False,
+                    }
+                ]
+            }
 
         r_json = self.util.post('record:host', payload=payload,
                                 fields=['ipv4addrs'])
         if r_json is None:
-            raise InfobloxGeneralException("Failed to create "
-                                           "host record for [%s]" % (address))
+            raise InfobloxGeneralException('Failed to create host record '
+                                           'for [{}]'.format(address))
         return r_json['ipv4addrs'][0]['ipv4addr']
 
     def get_cname_record(self, fqdn):
