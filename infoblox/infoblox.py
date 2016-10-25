@@ -208,10 +208,12 @@ class Infoblox(object):
         return r_json['ipv4addrs'][0]['ipv4addr']
 
     def get_cname_record(self, fqdn):
-        """ Retrieves a CNAME record by FQDN
-        :param fqdn: hostname in FQDN
-        """
+        """Return the CNAME record given an FQDN.
 
+        :param str fqdn: hostname in FQDN
+        :return: CNAME record
+        :rtype: dict
+        """
         # canonical instead of name?
         rest_url = "{}/record:cname?name={}".format(self.base_url, fqdn)
         try:
@@ -223,11 +225,11 @@ class Infoblox(object):
                     if cname_ref and re.match("record:cname\/[^:]+:([^\/]+)\/", cname_ref).group(1) == fqdn:
                         return r_json[0]
                     else:
-                        raise InfobloxGeneralException(
-                            "Received unexpected cname record  reference: " + cname_ref)
+                        msg = 'Received unexpected cname record reference: {}'
+                        raise InfobloxGeneralException(msg.format(cname_ref))
                 else:
-                    raise InfobloxNotFoundException(
-                        "No requested cname record found: " + fqdn)
+                    msg = 'No requested cname record found: {}'
+                    raise InfobloxNotFoundException(msg.format(fqdn))
             else:
                 if 'text' in r_json:
                     raise InfobloxGeneralException(r_json['text'])
@@ -239,25 +241,28 @@ class Infoblox(object):
             raise
 
     def create_txt_record(self, text, fqdn):
-        """ Implements IBA REST API call to create IBA txt record
-        Returns IP v4 address assigned to the host
-        :param text: free text to be added to the record
-        :param fqdn: hostname in FQDN
+        """Create a txt record given the text and an FQDN.
+
+        :param str text: free text to be added to the record
+        :param str fqdn: hostname in FQDN
         """
-        rest_url = 'https://' + self.iba_host + '/wapi/v' + \
-            self.iba_wapi_version + '/record:txt'
-        payload = '{"text": "' + text + '","name": "' + fqdn + \
-            '","view": "' + self.iba_dns_view + '"}'
+        rest_url = 'https://{.iba_host}/wapi/v/{.iba_wapi_version}/record:txt'
+        rest_url = rest_url.format(self)
+
+        payload = {
+            'text': text,
+            'name': fqdn,
+            'view': self.iba_dns_view,
+        }
         try:
-            r = self.session.post(url=rest_url, data=payload)
+            r = self.session.post(url=rest_url, json=payload)
             r_json = r.json()
             if r.status_code == 200 or r.status_code == 201:
                 return
+            if 'text' in r_json:
+                raise InfobloxGeneralException(r_json['text'])
             else:
-                if 'text' in r_json:
-                    raise InfobloxGeneralException(r_json['text'])
-                else:
-                    r.raise_for_status()
+                r.raise_for_status()
         except ValueError:
             raise Exception(r)
         except Exception:
