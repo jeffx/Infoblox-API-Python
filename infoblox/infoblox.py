@@ -144,8 +144,8 @@ class Infoblox(object):
                         return ip_v4
                     else:
                         if 'text' in r_json:
-                            if ('code' in r_json
-                                    and r_json['code'] == 'Client.Ibap.Data'):
+                            if ('code' in r_json and
+                                    r_json['code'] == 'Client.Ibap.Data'):
                                 raise InfobloxNoIPavailableException(
                                     r_json['text'])
                             else:
