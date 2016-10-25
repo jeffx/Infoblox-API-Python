@@ -44,58 +44,58 @@ class InfobloxBadInputParameter(Exception):
 
 class Infoblox(object):
 
-    """ Implements the following subset of Infoblox IPAM API via REST API
-    create_network
-    delete_network
-    create_networkcontainer
-    delete_networkcontainer
-    get_next_available_network
-    create_host_record
-    create_txt_record
-    delete_txt_record
-    delete_host_record
-    add_host_alias
-    delete_host_alias
-    get_a_record_by_ip
-    get_a_record_by_fqdn
-    get_cname_record
-    create_cname_record
-    delete_cname_record
-    update_cname_record
-    create_dhcp_range
-    delete_dhcp_range
-    get_next_available_ip
-    get_host
-    get_host_by_ip
-    get_ip_by_host
-    get_host_by_regexp
-    get_txt_by_regexp
-    get_host_by_extattrs
-    get_host_extattrs
-    get_network
-    get_network_by_ip
-    get_network_by_extattrs
-    get_network_extattrs
-    update_network_extattrs
-    delete_network_extattrs
+
+class Infoblox(object):
+    """A client for the Infoblox IPAM API.
+
+    Implements the following subset of Infoblox IPAM API via REST API:
+
+        - create_network
+        - delete_network
+        - create_networkcontainer
+        - delete_networkcontainer
+        - get_next_available_network
+        - create_host_record
+        - create_txt_record
+        - delete_txt_record
+        - delete_host_record
+        - add_host_alias
+        - delete_host_alias
+        - get_a_record_by_ip
+        - get_a_record_by_fqdn
+        - get_cname_record
+        - create_cname_record
+        - delete_cname_record
+        - update_cname_record
+        - create_dhcp_range
+        - delete_dhcp_range
+        - get_next_available_ip
+        - get_host
+        - get_host_by_ip
+        - get_ip_by_host
+        - get_host_by_regexp
+        - get_txt_by_regexp
+        - get_host_by_extattrs
+        - get_host_extattrs
+        - get_network
+        - get_network_by_ip
+        - get_network_by_extattrs
+        - get_network_extattrs
+        - update_network_extattrs
+        - delete_network_extattrs
     """
 
-    def __init__(self,
-                 iba_ipaddr,
-                 iba_user,
-                 iba_password,
-                 iba_wapi_version,
-                 iba_dns_view,
-                 iba_network_view,
-                 iba_verify_ssl=False):
-        """ Class initialization method
-        :param iba_ipaddr: IBA IP address of management interface
-        :param iba_user: IBA user name
-        :param iba_password: IBA user password
-        :param iba_wapi_version: IBA WAPI version (example: 1.0)
-        :param iba_dns_view: IBA default view
-        :param iba_network_view: IBA default network view
-        :param iba_verify_ssl: IBA SSL certificate validation (example: False)
+    def __init__(self, iba_ipaddr, iba_user, iba_password, iba_wapi_version,
+                 iba_dns_view, iba_network_view, iba_verify_ssl=False):
+        """Create a client for a particular infoblox server.
+
+        :param str iba_ipaddr: IBA IP address of management interface
+        :param str iba_user: IBA user name
+        :param striba_password: IBA user password
+        :param str iba_wapi_version: IBA WAPI version (example: 1.0)
+        :param str iba_dns_view: IBA default view
+        :param str iba_network_view: IBA default network view
+        :param str iba_verify_ssl: IBA SSL certificate validation (example: False)
         """
         self.iba_host = iba_ipaddr
         self.iba_user = iba_user
@@ -119,9 +119,11 @@ class Infoblox(object):
         self.session.verify = self.iba_verify_ssl
 
     def get_next_available_ip(self, network):
-        """ Implements IBA next_available_ip REST API call
-        Returns IP v4 address
-        :param network: network in CIDR format
+        """Return the next available IP address given a network.
+
+        :param str network: network in CIDR format
+        :return: IPv4 address
+        :rtype: str
         """
         rest_url = 'https://' + self.iba_host + '/wapi/v' +  \
                    self.iba_wapi_version + '/network?network=' \
