@@ -18,27 +18,31 @@ import requests
 import json
 
 
-class InfobloxNotFoundException(Exception):
+class InfobloxException(Exception):
     pass
 
 
-class InfobloxNotUpdatedException(Exception):
+class InfobloxNotFoundException(InfobloxException):
     pass
 
 
-class InfobloxNoIPavailableException(Exception):
+class InfobloxNotUpdatedException(InfobloxException):
     pass
 
 
-class InfobloxNoNetworkAvailableException(Exception):
+class InfobloxNoIPavailableException(InfobloxException):
     pass
 
 
-class InfobloxGeneralException(Exception):
+class InfobloxNoNetworkAvailableException(InfobloxException):
     pass
 
 
-class InfobloxBadInputParameter(Exception):
+class InfobloxGeneralException(InfobloxException):
+    pass
+
+
+class InfobloxBadInputParameter(InfobloxException):
     pass
 
 
@@ -236,9 +240,7 @@ class Infoblox(object):
                 else:
                     r.raise_for_status()
         except ValueError:
-            raise Exception(r)
-        except Exception:
-            raise
+            raise InfobloxGeneralException(r)
 
     def create_txt_record(self, text, fqdn):
         """Create a txt record given the text and an FQDN.
@@ -264,9 +266,7 @@ class Infoblox(object):
             else:
                 r.raise_for_status()
         except ValueError:
-            raise Exception(r)
-        except Exception:
-            raise
+            raise InfobloxGeneralException(r)
 
     def delete_host_record(self, fqdn):
         """ Implements IBA REST API call to delete IBA host record
@@ -306,9 +306,7 @@ class Infoblox(object):
                 else:
                     r.raise_for_status()
         except ValueError:
-            raise Exception(r)
-        except Exception:
-            raise
+            raise InfobloxGeneralException(r)
 
     def delete_txt_record(self, fqdn):
         """ Implements IBA REST API call to delete IBA TXT record
@@ -348,9 +346,7 @@ class Infoblox(object):
                 else:
                     r.raise_for_status()
         except ValueError:
-            raise Exception(r)
-        except Exception:
-            raise
+            raise InfobloxGeneralException(r)
 
     def add_host_alias(self, host_fqdn, alias_fqdn):
         """ Implements IBA REST API call to add an alias to IBA host record
@@ -398,9 +394,7 @@ class Infoblox(object):
                 else:
                     r.raise_for_status()
         except ValueError:
-            raise Exception(r)
-        except Exception:
-            raise
+            raise InfobloxGeneralException(r)
 
     def delete_host_alias(self, host_fqdn, alias_fqdn):
         """ Implements IBA REST API call to add an alias to IBA host record
@@ -451,9 +445,7 @@ class Infoblox(object):
                 else:
                     r.raise_for_status()
         except ValueError:
-            raise Exception(r)
-        except Exception:
-            raise
+            raise InfobloxGeneralException(r)
 
     def create_cname_record(self, canonical, name):
         """ Implements IBA REST API call to create IBA cname record
@@ -475,9 +467,7 @@ class Infoblox(object):
                 else:
                     r.raise_for_status()
         except ValueError:
-            raise Exception(r)
-        except Exception:
-            raise
+            raise InfobloxGeneralException(r)
 
     def delete_cname_record(self, fqdn):
         """ Implements IBA REST API call to delete IBA cname record
@@ -515,9 +505,7 @@ class Infoblox(object):
                 else:
                     r.raise_for_status()
         except ValueError:
-            raise Exception(r)
-        except Exception:
-            raise
+            raise InfobloxGeneralException(r)
 
     def update_cname_record(self, canonical, name):
         """ Implements IBA REST API call to update or repoint IBA cname record
@@ -553,9 +541,7 @@ class Infoblox(object):
                 else:
                     r.raise_for_status()
         except ValueError:
-            raise Exception(r)
-        except Exception:
-            raise
+            raise InfobloxGeneralException(r)
 
     def create_dhcp_range(self, start_ip_v4, end_ip_v4):
         """ Implements IBA REST API call to add DHCP range for given
@@ -578,9 +564,7 @@ class Infoblox(object):
                 else:
                     r.raise_for_status()
         except ValueError:
-            raise Exception(r)
-        except Exception:
-            raise
+            raise InfobloxGeneralException(r)
 
     def delete_dhcp_range(self, start_ip_v4, end_ip_v4):
         """ Implements IBA REST API call to delete DHCP range for given
@@ -621,9 +605,7 @@ class Infoblox(object):
                 else:
                     r.raise_for_status()
         except ValueError:
-            raise Exception(r)
-        except Exception:
-            raise
+            raise InfobloxGeneralException(r)
 
     def get_host(self, fqdn, fields=None, notFoundFail=True):
         """ Implements IBA REST API call to retrieve host record fields
@@ -670,9 +652,7 @@ class Infoblox(object):
                 else:
                     r.raise_for_status()
         except ValueError:
-            raise Exception(r)
-        except Exception:
-            raise
+            raise InfobloxGeneralException(r)
 
     def get_txt_by_regexp(self, fqdn):
         """ Implements IBA REST API call to retrieve TXT records by fqdn
@@ -702,9 +682,7 @@ class Infoblox(object):
                 else:
                     r.raise_for_status()
         except ValueError:
-            raise Exception(r)
-        except Exception:
-            raise
+            raise InfobloxGeneralException(r)
 
     def get_host_by_ip(self, ip_v4, fields=None, notFoundFail=True):
         """ Implements IBA REST API call to find hostname by IP address
@@ -763,9 +741,7 @@ class Infoblox(object):
                 else:
                     r.raise_for_status()
         except ValueError:
-            raise Exception(r)
-        except Exception:
-            raise
+            raise InfobloxGeneralException(r)
 
     def get_host_extattrs(self, fqdn, attributes=None):
         """ Implements IBA REST API call to retrieve host extensible attributes
@@ -804,9 +780,7 @@ class Infoblox(object):
                 else:
                     r.raise_for_status()
         except ValueError:
-            raise Exception(r)
-        except Exception:
-            raise
+            raise InfobloxGeneralException(r)
 
     def get_network(self, network, fields=None):
         """ Implements IBA REST API call to retrieve network object fields
@@ -839,9 +813,7 @@ class Infoblox(object):
                 else:
                     r.raise_for_status()
         except ValueError:
-            raise Exception(r)
-        except Exception:
-            raise
+            raise InfobloxGeneralException(r)
 
     def get_network_by_ip(self, ip_v4):
         """ Implements IBA REST API call to find network by IP address which
@@ -870,9 +842,7 @@ class Infoblox(object):
                 else:
                     r.raise_for_status()
         except ValueError:
-            raise Exception(r)
-        except Exception:
-            raise
+            raise InfobloxGeneralException(r)
 
     def get_network_by_extattrs(self, attributes):
         """ Implements IBA REST API call to find a network by it's
@@ -911,9 +881,7 @@ class Infoblox(object):
                 else:
                     r.raise_for_status()
         except ValueError:
-            raise Exception(r)
-        except Exception:
-            raise
+            raise InfobloxGeneralException(r)
 
     def get_host_by_extattrs(self, attributes):
         """ Implements IBA REST API call to find host by it's extensible attributes
@@ -950,9 +918,7 @@ class Infoblox(object):
                 else:
                     r.raise_for_status()
         except ValueError:
-            raise Exception(r)
-        except Exception:
-            raise
+            raise InfobloxGeneralException(r)
 
     def get_network_extattrs(self, network, attributes=None):
         """ Implements IBA REST API call to retrieve network extensible attributes
@@ -992,9 +958,7 @@ class Infoblox(object):
                 else:
                     r.raise_for_status()
         except ValueError:
-            raise Exception(r)
-        except Exception:
-            raise
+            raise InfobloxGeneralException(r)
 
     def update_network_extattrs(self, network, attributes):
         """ Implements IBA REST API call to add or update network extensible attributes
@@ -1042,9 +1006,7 @@ class Infoblox(object):
                 else:
                     r.raise_for_status()
         except ValueError:
-            raise Exception(r)
-        except Exception:
-            raise
+            raise InfobloxGeneralException(r)
 
     def delete_network_extattrs(self, network, attributes):
         """ Implements IBA REST API call to delete network extensible attributes
@@ -1090,9 +1052,7 @@ class Infoblox(object):
                 else:
                     r.raise_for_status()
         except ValueError:
-            raise Exception(r)
-        except Exception:
-            raise
+            raise InfobloxGeneralException(r)
 
     def create_network(self, network):
         """ Implements IBA REST API call to create DHCP network object
@@ -1113,9 +1073,7 @@ class Infoblox(object):
                 else:
                     r.raise_for_status()
         except ValueError:
-            raise Exception(r)
-        except Exception:
-            raise
+            raise InfobloxGeneralException(r)
 
     def delete_network(self, network):
         """ Implements IBA REST API call to delete DHCP network object
@@ -1153,9 +1111,7 @@ class Infoblox(object):
                 else:
                     r.raise_for_status()
         except ValueError:
-            raise Exception(r)
-        except Exception:
-            raise
+            raise InfobloxGeneralException(r)
 
     def create_networkcontainer(self, networkcontainer):
         """ Implements IBA REST API call to create DHCP network containert object
@@ -1176,9 +1132,7 @@ class Infoblox(object):
                 else:
                     r.raise_for_status()
         except ValueError:
-            raise Exception(r)
-        except Exception:
-            raise
+            raise InfobloxGeneralException(r)
 
     def delete_networkcontainer(self, networkcontainer):
         """ Implements IBA REST API call to delete DHCP network container object
@@ -1216,9 +1170,7 @@ class Infoblox(object):
                 else:
                     r.raise_for_status()
         except ValueError:
-            raise Exception(r)
-        except Exception:
-            raise
+            raise InfobloxGeneralException(r)
 
     def get_next_available_network(self, networkcontainer, cidr):
         """ Implements IBA REST API call to retrieve next available network
@@ -1264,9 +1216,7 @@ class Infoblox(object):
                 else:
                     r.raise_for_status()
         except ValueError:
-            raise Exception(r)
-        except Exception:
-            raise
+            raise InfobloxGeneralException(r)
 
     def get_a_record_by_ip(self, ipaddr, fields=None, not_found_fail=True):
         """Retrieve A record by IP Address
@@ -1312,9 +1262,7 @@ class Infoblox(object):
                 else:
                     r.raise_for_status()
         except ValueError:
-            raise Exception(r)
-        except Exception:
-            raise
+            raise InfobloxGeneralException(r)
 
     def update_record(self, record, fields, confirm):
         self.util.put(record, fields, confirm)
@@ -1402,9 +1350,7 @@ class Util(object):
                 else:
                     r.raise_for_status()
         except ValueError:
-            raise Exception(r)
-        except Exception:
-            raise
+            raise InfobloxGeneralException(r)
 
     def put(self, record, payload, confirm=True):
         """Execute a put operation to update a record.
@@ -1461,6 +1407,4 @@ class Util(object):
                 else:
                     r.raise_for_status()
         except ValueError:
-            raise Exception(r)
-        except Exception:
-            raise
+            raise InfobloxGeneralException(r)
