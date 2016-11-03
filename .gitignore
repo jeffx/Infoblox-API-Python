@@ -62,3 +62,6 @@ test_results/
 
 # Pycharm
 .idea/
+
+# Mac
+.DS_Store
