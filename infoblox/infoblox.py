@@ -16,6 +16,7 @@
 import re
 import requests
 import json
+from six.moves import urllib
 
 
 class InfobloxException(Exception):
@@ -44,9 +45,6 @@ class InfobloxGeneralException(InfobloxException):
 
 class InfobloxBadInputParameter(InfobloxException):
     pass
-
-
-class Infoblox(object):
 
 
 class Infoblox(object):
@@ -108,14 +106,23 @@ class Infoblox(object):
         self.iba_dns_view = iba_dns_view
         self.iba_network_view = iba_network_view
         self.iba_verify_ssl = iba_verify_ssl
-        self.base_url = "https://{0}/wapi/v{1}".format(self.iba_host,
-                                                       self.iba_wapi_version)
+        self.base_url = 'https://{0.iba_host}/wapi/v/{0.iba_wapi_version}/'
         self._setup_session()
 
         self.util = Util(self.session,
                          iba_ipaddr, iba_user, iba_password,
                          iba_wapi_version, iba_dns_view, iba_network_view,
                          iba_verify_ssl)
+
+    def make_url(self, path):
+        """Return a complete URL given just the path.
+
+        :param str path: relative path for the URL
+        :return: an absolute URL
+        :rtype: str
+        """
+        base = self.base_url.format(self)
+        return urllib.parse.urljoin(base, path)
 
     def _setup_session(self):
         self.session = requests.Session()
@@ -129,11 +136,13 @@ class Infoblox(object):
         :return: IPv4 address
         :rtype: str
         """
-        rest_url = 'https://' + self.iba_host + '/wapi/v' +  \
-                   self.iba_wapi_version + '/network?network=' \
-                   + network + '&network_view=' + self.iba_network_view
+        params = {
+            'network': network,
+            'netowrk_view': self.iba_network_view,
+        }
+        rest_url = self.make_url(path='network')
         try:
-            r = self.session.get(url=rest_url)
+            r = self.session.get(url=rest_url, params=params)
             r_json = r.json()
             if r.status_code == 200:
                 if len(r_json) > 0:
@@ -248,7 +257,7 @@ class Infoblox(object):
         :param str text: free text to be added to the record
         :param str fqdn: hostname in FQDN
         """
-        rest_url = 'https://{.iba_host}/wapi/v/{.iba_wapi_version}/record:txt'
+        rest_url = 'https://{0.iba_host}/wapi/v/{0.iba_wapi_version}/record:txt'
         rest_url = rest_url.format(self)
 
         payload = {
@@ -269,12 +278,13 @@ class Infoblox(object):
             raise InfobloxGeneralException(r)
 
     def delete_host_record(self, fqdn):
-        """ Implements IBA REST API call to delete IBA host record
-        :param fqdn: hostname in FQDN
+        """Delete a host record given an FQDN.
+
+        :param str fqdn: FQDN of the host record
         """
-        rest_url = 'https://' + self.iba_host + '/wapi/v' + \
-            self.iba_wapi_version + '/record:host?name=' + fqdn + '&view=' \
-            + self.iba_dns_view
+        rest_url = ('https://{0.iba_host}/wapi/v/{0.iba_wapi_version}'
+                    '/record:host?name={1}&view={0.iba_dns_view}')
+        rest_url = rest_url.format(self, fqdn)
         try:
             r = self.session.get(url=rest_url)
             r_json = r.json()
