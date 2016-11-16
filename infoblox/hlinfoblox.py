@@ -5,7 +5,7 @@
 # License stuff
 #
 
-from .infoblox import Infoblox, InfobloxGeneralException
+from .infoblox import Infoblox, InfobloxGeneralException, Util
 
 # import more stuff
 
@@ -76,31 +76,37 @@ class HighLevelInfobloxActions(object):
 
         if fqdn is None:
             fqdn = self._guess_fqdn(address, ipv4address_record)
-
+            print("have to find fqdn [%s]" % fqdn)
         if not names:
             self._create_host_record(address, fqdn, mac)
-
+            print("have to find names [%s]" % names)
+     
+        print("this-is-fqdn [%s]" % fqdn)
+        print("this-is-names [%s]" % names)
         # If we found names associated with the address then
         # we can use those names to find record:host objects
         # and convert them to fixed.
         for name in names:
             print("Host Name [%s]" % (name))
             host_record = self.api.get_host(name, notFoundFail=False)
-            if host_record is None:
-                print("    Cannot find record:host for [%s]" % (name))
-                self._create_host_record(address, fqdn, mac)
+            a_record = self.api.get_a_record_by_ip(address)
+            print("Host Record [%s]" % (host_record))
+            print("A record [%s]" % (a_record))
+            if host_record is None and a_record is None:
+                print("    Cannot find record:host or a:record for [%s], exit" % (name))
+                # self._create_host_record(address, fqdn, mac)
             else:
-                print("    HOST Record [%s]" % (host_record))
                 print("    Converting lease to fixedaddress")
-                for host_host_ipv4addr in host_record['ipv4addrs']:
-                    fields = {
-                        'configure_for_dhcp': True,
-                        'match_client': 'MAC_ADDRESS',
-                        'mac': mac
-                    }
-                    self.api.update_record(host_record,
-                                           fields=fields,
-                                           confirm=confirm)
+                payload = {
+                    'name': fqdn,
+                    'ipv4addrs' : [{'ipv4addr': address,
+                                    'configure_for_dhcp': True,
+                                    'mac': mac}]
+                }
+                uri = 'record:host'
+                fields=''
+                status_code = self.api.util.post(uri, payload, fields)
+                break
 
     def _create_host_record(self, address, fqdn, mac):
         if fqdn is None:
@@ -126,6 +132,7 @@ class HighLevelInfobloxActions(object):
         """
 
         if 'dhcp_client_identifier' in ipv4address_record:
+            print("printing dhcp_client_identifier [%s]" % dhcp_client_identifier)
             return ipv4address_record['dhcp_client_identifier']
 
         for ref in ipv4address_record['objects']:
@@ -137,6 +144,7 @@ class HighLevelInfobloxActions(object):
                 print("Lease Record [%s]" % (lease_record))
 
                 if 'client_hostname' in lease_record:
+                    print("client_hostname [%s]" % lease_record)
                     return lease_record['client_hostname']
 
         return None
