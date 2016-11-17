@@ -1,6 +1,6 @@
 Infoblox Python API CHANGELOG
 =============================
-1.4.?
+1.4.1
 -----
 
 * [Wei Lei] - Fixed 'lease2fixed' in 'hlinfobolx.py'
