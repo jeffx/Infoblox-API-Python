@@ -1,9 +1,10 @@
 Infoblox Python API CHANGELOG
 =============================
-1.4.1
+1.5.0
 -----
 
-* [Wei Lei] - Fixed 'lease2fixed' in 'hlinfobolx.py'
+* [Robert Grant] - Unifed the exception classes into a single hierarchy
+* [Wei Lei] - Fixed `lease2fixed` in `hlinfobolx.py`
 
 1.4.0
 -----
