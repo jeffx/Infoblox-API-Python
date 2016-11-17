@@ -19,6 +19,7 @@ def get_requirements(filepath):
     analysis = parse_requirements(filepath, session=PipSession())
     return [str(requirement.req) for requirement in analysis]
 
+
 requirements = get_requirements('requirements.txt')
 test_requirements = get_requirements('testing_requirements.txt')
 
