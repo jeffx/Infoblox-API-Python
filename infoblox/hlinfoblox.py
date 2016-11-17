@@ -76,7 +76,7 @@ class HighLevelInfobloxActions(object):
 
         if fqdn is None:
             fqdn = self._guess_fqdn(address, ipv4address_record)
-            print("have to find fqdn [%s]" % fqdn)
+
         if not names:
             self._create_host_record(address, fqdn, mac)
      
