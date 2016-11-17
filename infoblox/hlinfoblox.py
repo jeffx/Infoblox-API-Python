@@ -79,7 +79,6 @@ class HighLevelInfobloxActions(object):
             print("have to find fqdn [%s]" % fqdn)
         if not names:
             self._create_host_record(address, fqdn, mac)
-            print("have to find names [%s]" % names)
      
         print("this-is-fqdn [%s]" % fqdn)
         print("this-is-names [%s]" % names)
@@ -132,7 +131,6 @@ class HighLevelInfobloxActions(object):
         """
 
         if 'dhcp_client_identifier' in ipv4address_record:
-            print("printing dhcp_client_identifier [%s]" % dhcp_client_identifier)
             return ipv4address_record['dhcp_client_identifier']
 
         for ref in ipv4address_record['objects']:
@@ -144,7 +142,6 @@ class HighLevelInfobloxActions(object):
                 print("Lease Record [%s]" % (lease_record))
 
                 if 'client_hostname' in lease_record:
-                    print("client_hostname [%s]" % lease_record)
                     return lease_record['client_hostname']
 
         return None
