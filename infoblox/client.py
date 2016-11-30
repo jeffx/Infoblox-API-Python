@@ -1,8 +1,8 @@
-"""client.py - contains the Session, Infoblox, and Exception classes."""
+"""client.py - contains the Infoblox client class."""
 import re
 
-import requests
-from six.moves import urllib
+from . import exceptions
+from . import session
 
 
 STATIC_FORMAT = '^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$'
@@ -11,250 +11,15 @@ RANGE_FORMAT = ('^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+'
                 '-[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$')
 
 
-class InfobloxException(Exception):
-    """Base exception for all exceptions raised."""
-
-    pass
-
-
-class ApiError(InfobloxException):
-    """General purpose Infoblox API error."""
-
-    def __init__(self, Error, code, text, trace=None):
-        """Create an instance of an ApiError.
-
-        :param str Error: error type (followed by an explanation after ":")
-        :param str code: symbolic error code
-        :param str text: explanation of the error
-        :param str trace: debug trace from the server if debug is enabled
-        """
-        self.error = Error
-        self.code = code
-        self.text = text
-        self.trace = trace
-        super(ApiError, self).__init__(text)
-
-
-class NotFoundError(InfobloxException):
-    """Error to indicate the requested resource could not be found."""
-
-    def __init__(self, resource, value):
-        """Create an instance of a NotFoundError exception.
-
-        :param str resource: type of resource that could not be found
-        :param str value: the value used to find the resource
-        """
-        self.resource = resource
-        self.value = value
-        msg = 'No such {resource} called {value} could be found.'
-        super(NotFoundError, self).__init__(msg.format(**vars(self)))
-
-
-class BadAddressError(ValueError, InfobloxException):
-    """Error to indicate a bad address has been given."""
-
-    def __init__(self, address):
-        """Create an instance of a BadAddressError.
-
-        :param address: the bad address
-        """
-        self.address = address
-        msg = ('The given address ({!r}) was not one of the following address '
-               'types: CIDR, IP range, or static IP.')
-        super(BadAddressError, self).__init__(msg.format(address), address)
-
-
 # Parse the given address into the correct format for a query.
 def _parse_ipv4addr(address):
     if re.match(CIDR_FORMAT, address) or re.match(RANGE_FORMAT, address):
         return 'func:nextavailableip:{0}'.format(address)
     if re.match(STATIC_FORMAT, address):
         return address
-    raise BadAddressError('Expected address to be in CIDR format, an '
-                          'address range, or a static IP address.')
-
-
-class Session(requests.Session):
-    """Custom requests session for use with the Infoblox API."""
-
-    #: Default page size
-    DEFAULT_PAGE_SIZE = 1000
-
-    # TODO: look up when to specify the API version
-    def __init__(self, url, version, page_size=None):
-        """Create a new Infoblox Session instance.
-
-        :param str url: base URL for an Infoblox server
-        :param str version: API version to use
-        """
-        super(Session, self).__init__()
-        self.endpoint = url, version
-        self.page_size = page_size
-
-    @property
-    def endpoint(self):
-        """Return the session's endpoint URL.
-
-        :return: complete base URL
-        :rtype: str
-        """
-        return self._endpoint
-
-    @endpoint.setter
-    def endpoint(self, value):
-        """Set the sessions's endpoint URL by base URL and API version.
-
-        :param tuple value: 2-tuple of base URL and API version
-        """
-        url, version = value
-        path = 'wapi/v{0}/'.format(version)
-        self._endpoint = urllib.parse.urljoin(url, path)
-
-    @property
-    def page_size(self):
-        return self._page_size
-
-    @page_size.setter
-    def page_size(self, value):
-        try:
-            self._page_size = abs(value) or None
-        except TypeError:
-            self._page_size = None
-
-    # This is necessary because some of the URL paths contain colons, which
-    # urllib naively interprets as a division between scheme and netloc.
-    def _urlize(self, path):
-        PATH = 2
-        components = list(urllib.parse.urlsplit(self.endpoint))
-        # Either the path is relative or absolute
-        if path.startswith('/'):
-            new_path = path
-        else:
-            old_path = components[PATH].rstrip('/')  # no double slashes
-            new_path = '/'.join([old_path, path])
-        components[PATH] = new_path
-        return urllib.parse.urlunsplit(components)
-
-    # This logic handles the use of the correct param for return fields while
-    # also CSV'ing the given fields.
-    def _get_fields(self, fields, fields_only):
-        param = {}
-        if fields is not None:
-            if fields_only:
-                field = '_return_fields'
-            else:
-                field = '_return_fields+'
-            param = {field: ','.join(fields)}
-        return param
-
-    # Combine requests' raise_for_status and json methods for expediency.
-    def _raise_for_status_or_get_json(self, response):
-        try:
-            response.raise_for_status()
-        except Exception:
-            raise ApiError(**response.json())
-        return response.json()
-
-    def get(self, resource, page_id=None, return_fields=None,
-            return_fields_only=False, **kwargs):
-        """Get a resource.
-
-        This implements the specifics of an Infoblox GET request. Note that
-        additional keyword arguments are passed along to the underlying GET
-        request(s) made.
-
-        :param str resource: the relative path for a resource
-        :param int page_id: initial page of results to request
-        :param list return_fields: the fields to return
-        :param bool return_fields_only: whether to exclude all fields not given
-        :return: response data from JSON
-        :rtype: list or dict
-        :raises ApiError: if the status code of the response is greater than
-                          or equal to 400
-        """
-        # Set the params for paging and return fields
-        params = kwargs.pop('params', {})
-        params['_return_as_object'] = 1
-        if self.page_size is not None:
-            params['_max_results'] = self.page_size
-            params['_paging'] = 1
-            params['_page_id'] = page_id
-        fields = self._get_fields(return_fields, return_fields_only)
-        params.update(fields)
-
-        # Make the first request
-        url = self._urlize(resource)
-        response = super(Session, self).get(url, params=params, **kwargs)
-        data = self._raise_for_status_or_get_json(response)
-        results = data['result']
-
-        # Don't forget about additional result pages
-        while 'next_page_id' in data and page_id is not None:
-            params['_page_id'] = data['next_page_id']
-            response = super(Session, self).get(url, params=params, **kwargs)
-            data = self._raise_for_status_or_get_json(response)
-            results.extend(data['result'])
-        return results
-
-    def post(self, resource, return_fields=None, return_fields_only=False, **kwargs):
-        """Create a new object.
-
-        This implements the specifics of an Infoblox POST request. Note that
-        additional keyword arguments are passed along to the underlying POST
-        request made. If additional return fields are requested, the object is
-        returned instead of just the reference.
-
-        :param str resource: the relative path for a resource
-        :param list return_fields: list of fields to return
-        :param bool return_fields_only: whether to exclude all fields not given
-        :return: object reference of the object created or the object itself
-        :rtype: str or dict
-        :raises ApiError: if the status code of the response is greater than
-                          or equal to 400
-        """
-        params = kwargs.pop('params', {})
-        fields = self._get_fields(return_fields, return_fields_only)
-        params.update(fields)
-
-        url = self._urlize(resource)
-        response = super(Session, self).post(url, params=params, **kwargs)
-        return self._raise_for_status_or_get_json(response)
-
-    def put(self, resource, return_fields=None, return_fields_only=False, **kwargs):
-        """Update an existing object.
-
-        This implements the specifics of an Infoblox PUT request. Note that
-        additional keyword arguments are passed along to the underlying PUT
-        request made.
-
-        :param str resource: the relative path for a resource
-        :param list return_fields: list of fields to return
-        :param bool return_fields_only: whether to exclude all fields not given
-        :return: object reference of the object updated or the object itself
-        :rtype: str or dict
-        :raises ApiError: if the status code of the response is greater than
-                          or equal to 400
-        """
-        params = kwargs.pop('params', {})
-        fields = self._get_fields(return_fields, return_fields_only)
-        params.update(fields)
-
-        url = self._urlize(resource)
-        response = super(Session, self).put(url, params=params, **kwargs)
-        return self._raise_for_status_or_get_json(response)
-
-    def delete(self, resource, **kwargs):
-        """Delete an existing object.
-
-        :param str resource: the relative path for a resource
-        :return: object reference of the object deleted
-        :rtype: str
-        :raises ApiError: if the status code of the response is greater than
-                          or equal to 400
-        """
-        url = self._urlize(resource)
-        response = super(Session, self).delete(url, **kwargs)
-        return self._raise_for_status_or_get_json(response)
+    raise exceptions.BadAddressError('Expected address to be in CIDR format, '
+                                     'an address range, or a static IP '
+                                     'address.')
 
 
 class Infoblox(object):
@@ -270,7 +35,7 @@ class Infoblox(object):
         :param str dns_view: name of the DNS view to use
         :param str network_view: name of the network view to use
         """
-        session_class = _session or Session
+        session_class = _session or session.Session
         self.session = session_class(url, version)
         self.session.auth = username, password
         self.session.verify = False
@@ -357,7 +122,7 @@ class Infoblox(object):
         try:
             return records[0]
         except IndexError:
-            raise NotFoundError('host record', params['name'])
+            raise exceptions.NotFoundError('host record', params['name'])
 
     def delete_host_record(self, fqdn):
         """Delete the host record with the given *fqdn*.
@@ -395,8 +160,8 @@ class Infoblox(object):
         :param list fields: additional txt record fields to return
         :return: the txt record optionally with additonal fields
         :rtype: dict
-        :raises NotFoundError: if there is no txt record associated with the given
-                          FQDN
+        :raises exceptions.NotFoundError: if there is no txt record associated
+                                          with the given FQDN
         """
         params = {
             'name': fqdn,
@@ -407,7 +172,7 @@ class Infoblox(object):
         try:
             return record[0]
         except IndexError:
-            raise NotFoundError('txt record', params['name'])
+            raise exceptions.NotFoundError('txt record', params['name'])
 
     def delete_txt_record(self, fqdn):
         """Delete the txt record of the given *fqdn*.
@@ -484,7 +249,7 @@ class Infoblox(object):
         try:
             return record[0]
         except IndexError:
-            raise NotFoundError('CNAME record', payload['name'])
+            raise exceptions.NotFoundError('CNAME record', payload['name'])
 
     def update_cname_record(self, canonical, name):
         """Update an existing CNAME record to point to the given *name*.
@@ -534,8 +299,8 @@ class Infoblox(object):
         :param str end: the IPv4 ending address
         :return: the DHCP range
         :rtype: dict
-        :raises NotFoundError: if there is no DHCP range with the given *start*
-                               and *end* addresses
+        :raises exceptions.NotFoundError: if there is no DHCP range with the
+                                          given *start* and *end* addresses
         """
         params = {
             'start_addr': start,
@@ -546,7 +311,7 @@ class Infoblox(object):
         try:
             return dhcp_range[0]
         except IndexError:
-            raise NotFoundError('DHCP range', (start, end))
+            raise exceptions.NotFoundError('DHCP range', (start, end))
 
     def delete_dhcp_range(self, start, end):
         """Delete the DHCP range with the given *start* and *end* addreeses.
@@ -599,7 +364,7 @@ class Infoblox(object):
         :param list fields: additional fields to return
         :return: the specified network ammended with the given fields
         :rtype: dict
-        :raises NotFoundError: if the given network cannot be found
+        :raises exceptions.NotFoundError: if the given network cannot be found
         """
         params = {
             'network': network,
@@ -610,7 +375,7 @@ class Infoblox(object):
         try:
             return network[0]
         except IndexError:
-            raise NotFoundError('network', params['network'])
+            raise exceptions.NotFoundError('network', params['network'])
 
     # TODO: Get rid of this method
     def get_network_extattrs(self, network):
@@ -656,7 +421,8 @@ class Infoblox(object):
         :param str container: a network container in CIDR format
         :return: a network container
         :rtype: dict
-        :raises NotFoundError: if the network container could not be found
+        :raises exceptions.NotFoundError: if the network container could not
+                                          be found
         """
         params = {
             'network': container,
@@ -666,7 +432,7 @@ class Infoblox(object):
         try:
             return container[0]
         except IndexError:
-            raise NotFoundError('network container', container)
+            raise exceptions.NotFoundError('network container', container)
 
     def delete_network_container(self, container):
         """Delete a network container.
@@ -712,14 +478,15 @@ class Infoblox(object):
         :param list fields: a list of additonal fields to return
         :return: the A-record with the given ip
         :rtype: dict
-        :raises NotFoundError: if no A-record with the given ip can be found
+        :raises exceptions.NotFoundError: if no A-record with the given ip can
+                                          be found
         """
         records = self.get_a_records_by_field(field='ipv4addr', value=ip,
                                               fields=fields)
         try:
             return records[0]
         except IndexError:
-            raise NotFoundError('A record', ip)
+            raise exceptions.NotFoundError('A record', ip)
 
     def get_a_record_by_fqdn(self, fqdn, fields=None):
         """Get the A-record with the given *fqdn*.
@@ -728,14 +495,15 @@ class Infoblox(object):
         :param list fields: a list of additional fields to return
         :return: the A-record with the given fqdn
         :rtype: dict
-        :raises NotFoundError: if no A-record with the given fqdn can be found
+        :raises exceptions.NotFoundError: if no A-record with the given fqdn
+                                          can be found
         """
         records = self.get_a_records_by_field(field='name', value=fqdn,
                                               fields=fields)
         try:
             return records[0]
         except IndexError:
-            raise NotFoundError('A record', fqdn)
+            raise exceptions.NotFoundError('A record', fqdn)
 
     ## Search utils
 
@@ -809,8 +577,8 @@ class Infoblox(object):
         :param str ip: an IPv4 address
         :return: the network that contains the given ip
         :rtype: dict
-        :raises NotFoundError: if the IP address does not exist in any known
-                               networks
+        :raises exceptions.NotFoundError: if the IP address does not exist in
+                                          any known networks
         """
         params = {
             'ip_address': ip,
@@ -820,7 +588,7 @@ class Infoblox(object):
         try:
             return network[0]
         except IndexError:
-            raise NotFoundError('IP address', ip)
+            raise exceptions.NotFoundError('IP address', ip)
 
     def get_networks_by_extatts(self, attributes):
         """Get the networks with the given *attributes*.
