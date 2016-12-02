@@ -25,7 +25,7 @@ def _parse_ipv4addr(address):
 class Infoblox(object):
 
     def __init__(self, url, username, password, version, dns_view='default',
-                 network_view='default', _session=None):
+                 network_view='default'):
         """Create a new Infoblox client.
 
         :param str url: scheme and domain of the API endpoint
@@ -35,8 +35,7 @@ class Infoblox(object):
         :param str dns_view: name of the DNS view to use
         :param str network_view: name of the network view to use
         """
-        session_class = _session or session.Session
-        self.session = session_class(url, version)
+        self.session = session.Session(url, version)
         self.session.auth = username, password
         self.session.verify = False
         self.views = {
@@ -44,7 +43,7 @@ class Infoblox(object):
             'network': network_view,
         }
 
-    ## API Functions
+    # API Functions
 
     def get_next_available_ips(self, network, count=1):
         """Return the next *count* available IPs in a given *network*.
@@ -72,7 +71,7 @@ class Infoblox(object):
         data = self.session.post(container['_ref'], params=params)
         return data.get('networks', [])  # TODO: will none ever be returned?
 
-    ## Host record
+    # Host record
 
     def create_host_record(self, address, fqdn, is_dhcp=False):
         """Create a new host record for the given *address*.
@@ -112,17 +111,30 @@ class Infoblox(object):
         :param list fields: additional fields to return
         :return: a host record if one exists
         :rtype: dict
+        :raises exceptions.NotFoundError: if the host record cannot be found
         """
-        params = {
-            'name': fqdn,
-            'view': self.views['dns'],
-        }
-        records = self.session.get('record:host', params=params,
-                                   return_fields=fields)
+        query = {'name': fqdn}
+        records = self.search_host_records(query, fields=fields)
         try:
             return records[0]
         except IndexError:
-            raise exceptions.NotFoundError('host record', params['name'])
+            raise exceptions.NotFoundError('host record', fqdn)
+
+    def get_host_record_by_mac(self, mac, fields=None):
+        """Get the host record with the given *mac*.
+
+        :param str mac: the MAC address
+        :param list fields: additional fields to return
+        :return: a host record
+        :rtype: dict
+        :raises exceptions.NotFoundError: if the host record cannot be found
+        """
+        query = {'mac:': mac}
+        records = self.search_host_records(query, fields=fields)
+        try:
+            return records[0]
+        except IndexError:
+            raise exceptions.NotFoundError('host record', mac)
 
     def delete_host_record(self, fqdn):
         """Delete the host record with the given *fqdn*.
@@ -135,7 +147,7 @@ class Infoblox(object):
         deleted_ref = self.session.delete(record['_ref'])
         return deleted_ref
 
-    ## Txt record
+    # Txt record
 
     def create_txt_record(self, fqdn, text):
         """Create a txt record for the given *fqdn*.
@@ -185,7 +197,7 @@ class Infoblox(object):
         deleted_ref = self.session.delete(record['_ref'])
         return deleted_ref
 
-    ## Host alias
+    # Host alias
 
     def create_host_alias(self, fqdn, alias):
         """Create a new *alias* for the given *fqdn*.
@@ -218,7 +230,7 @@ class Infoblox(object):
         updated_record = self.session.put(record['_ref'], json=payload)
         return updated_record
 
-    ## CNAME
+    # CNAME
 
     def create_cname_record(self, canonical, name):
         """Create a CNAME record for the given *canonical* name.
@@ -275,7 +287,7 @@ class Infoblox(object):
         deleted_ref = self.session.delete(record['_ref'])
         return deleted_ref
 
-    ## DHCP range
+    # DHCP range
 
     def create_dhcp_range(self, start, end):
         """Create a new DHCP range from the given *start* and *end* addresses.
@@ -325,7 +337,7 @@ class Infoblox(object):
         deleted_dhcp_range = self.session.delete(dhcp_range['_ref'])
         return deleted_dhcp_range
 
-    ## Network
+    # Network
 
     def create_network(self, network):
         """Create a new network.
@@ -399,7 +411,7 @@ class Infoblox(object):
         deleted_network = self.session.delete(network['_ref'])
         return deleted_network
 
-    ## Network containers
+    # Network containers
 
     def create_network_container(self, container):
         """Create a network container.
@@ -445,7 +457,7 @@ class Infoblox(object):
         deleted_ref = self.session.delete(container['_ref'])
         return deleted_ref
 
-    ## A records
+    # A records
 
     def get_a_records(self, fields=None):
         """Get all A-records ammeneded with the given *fields*.
@@ -505,37 +517,43 @@ class Infoblox(object):
         except IndexError:
             raise exceptions.NotFoundError('A record', fqdn)
 
-    ## Search utils
+    # Search utils
 
-    def search_host_records(self, fqdn):
-        """Search for a host record with the given *fqdn*.
+    def search(self, resource, query, fields=None):
+        """Search for the given *resource* using the given *query*.
 
-        :param str fqdn: an FQDN
-        :return: zero or more host records with the given FQDN
+        :param str resource: a resource name (e.g. "record:host")
+        :param dict query: fields and the values they must have
+        :param list fields: additional fields to return
+        :return: all host records matching the given query
         :rtype: list
         """
-        params = {
-            'name~': fqdn,
-            'view': self.views['dns'],
-        }
-        records = self.session.get('record:host', params=params)
+        params = {'view': self.views['dns']}
+        params.update(query)
+        records = self.session.get(resource, params=params,
+                                   return_fields=fields)
         return records
 
-    def search_txt_records(self, fqdn):
+    def search_host_records(self, query, fields=None):
+        """Search for host records that match the given *query*.
+
+        :param dict query: fields and the values they must have
+        :param list fields: additional fields to return
+        :return: all host records matching the given query
+        :rtype: list
+        """
+        return self.search('record:host', query=query, fields=fields)
+
+    def search_txt_records(self, query, fields=None):
         """Search for a txt record with the given *fqdn*.
 
         :param str fqdn: an FQDN
         :return: zero or more txt records with the given FQDN
         :rtype: list
         """
-        params = {
-            'name~': fqdn,
-            'view': self.views['dns'],
-        }
-        records = self.session.get('record:txt', params=params)
-        return records
+        return self.search('record:txt', query=query, fields=fields)
 
-    ## Specific gets
+    # Specific gets
 
     def get_address_by_ip(self, ip):
         """Get the IPv4 address record with the given *ip*.
@@ -613,3 +631,50 @@ class Infoblox(object):
         params['view'] = self.views['dns']
         record = self.session.get('record:host', params=params)
         return [r for r in record if 'name' in r]
+
+    # High level actions
+
+    def get_fqdn_from_ipv4address(self, address):
+        """Get the FQDN from the given *address*.
+
+        :param dict address: address record of the host
+        :return: the FQDN associated with the given *address*
+        :rtype: str
+        """
+        fqdn = address.get('dhcp_client_identifier')
+        if not fqdn:
+            leases = (r for r in address['objects'] if r.startswith('lease'))
+            for lease in leases:
+                record = self.session.get(lease, fields=['client_hostname'])
+                fqdn = record['client_hostname']
+                if fqdn:
+                    break
+        return fqdn
+
+    def convert_lease_to_fixed_address(self, ip, create=True):
+        """Convert a DHCP lease to a FixedAddress.
+
+        If no host record for the given *ip* can be found, one is created if
+        *create* is ``True``.
+
+        :param str ip: the IPv4 address to convert to fixed
+        :param bool create: whether to create a missing host record
+        :return: the resulting host record
+        :rtype: dict
+        """
+        address = self.get_address_by_ip(ip)
+        try:
+            host = self.get_host_record_by_mac(address['mac_address'])
+        except exceptions.NotFoundError:
+            if not create:
+                raise
+            fqdn = self.get_fqdn_from_ipv4address(address)
+            host = self.create_host_record(ip, fqdn, is_dhcp=True)
+
+        payload = {
+            'configure_for_dhcp': True,
+            'match_client': 'MAC_ADDRESS',
+            'mac': address['mac_address'],
+        }
+        updated_record = self.session.put(host['_ref'], json=payload)
+        return updated_record
