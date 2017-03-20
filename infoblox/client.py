@@ -22,7 +22,7 @@ def _parse_ipv4addr(address):
                                      'address.')
 
 
-class Infoblox(object):
+class Client(object):
 
     def __init__(self, url, username, password, version, dns_view='default',
                  network_view='default'):
@@ -42,34 +42,6 @@ class Infoblox(object):
             'dns': dns_view,
             'network': network_view,
         }
-
-    # API Functions
-
-    def get_next_available_ips(self, network, count=1):
-        """Return the next *count* available IPs in a given *network*.
-
-        :param str network: network to search
-        :param int count: maximum number of available IPs to get
-        :return: list of available IPs in the given network
-        :rtype: list
-        """
-        network = self.get_network(network)
-        params = {
-            '_function': 'next_available_ip',
-            'num': count,
-        }
-        data = self.session.post(network['_ref'], params=params)
-        return data.get('ips', [])  # TODO: will none ever be returned?
-
-    def get_next_available_networks(self, container, cidr, count=1):
-        container = self.get_network_container(container)
-        params = {
-            '_function': 'next_available_network',
-            'cidr': cidr,
-            'count': count,
-        }
-        data = self.session.post(container['_ref'], params=params)
-        return data.get('networks', [])  # TODO: will none ever be returned?
 
     # Host record
 
@@ -119,22 +91,6 @@ class Infoblox(object):
             return records[0]
         except IndexError:
             raise exceptions.NotFoundError('host record', fqdn)
-
-    def get_host_record_by_mac(self, mac, fields=None):
-        """Get the host record with the given *mac*.
-
-        :param str mac: the MAC address
-        :param list fields: additional fields to return
-        :return: a host record
-        :rtype: dict
-        :raises exceptions.NotFoundError: if the host record cannot be found
-        """
-        query = {'mac:': mac}
-        records = self.search_host_records(query, fields=fields)
-        try:
-            return records[0]
-        except IndexError:
-            raise exceptions.NotFoundError('host record', mac)
 
     def delete_host_record(self, fqdn):
         """Delete the host record with the given *fqdn*.
@@ -389,17 +345,6 @@ class Infoblox(object):
         except IndexError:
             raise exceptions.NotFoundError('network', params['network'])
 
-    # TODO: Get rid of this method
-    def get_network_extattrs(self, network):
-        """Get the extattrs of the given *network*.
-
-        :param str network: a network in CIDR format
-        :return: the extattrs of the given *network*
-        :rtype: dict
-        """
-        network = self.get_network(network, fields=('network', 'extattrs'))
-        return {k: v['value'] for k, v in network['extattrs'].items()}
-
     def delete_network(self, network):
         """Delete the given network.
 
@@ -469,6 +414,70 @@ class Infoblox(object):
         records = self.session.get('record:a', return_fields=fields)
         return records
 
+    # Search utils
+
+    def search(self, resource, query, fields=None):
+        """Search for the given *resource* using the given *query*.
+
+        :param str resource: a resource name (e.g. "record:host")
+        :param dict query: fields and the values they must have
+        :param list fields: additional fields to return
+        :return: all host records matching the given query
+        :rtype: list
+        """
+        params = {'view': self.views['dns']}
+        params.update(query)
+        records = self.session.get(resource, params=params,
+                                   return_fields=fields)
+        return records
+
+    def search_host_records(self, query, fields=None):
+        """Search for host records that match the given *query*.
+
+        :param dict query: fields and the values they must have
+        :param list fields: additional fields to return
+        :return: all host records matching the given query
+        :rtype: list
+        """
+        return self.search('record:host', query=query, fields=fields)
+
+    def search_txt_records(self, query, fields=None):
+        """Search for a txt record with the given *fqdn*.
+
+        :param str fqdn: an FQDN
+        :return: zero or more txt records with the given FQDN
+        :rtype: list
+        """
+        return self.search('record:txt', query=query, fields=fields)
+
+    # Specific gets
+
+    def get_network_extattrs(self, network):
+        """Get the extattrs of the given *network*.
+
+        :param str network: a network in CIDR format
+        :return: the extattrs of the given *network*
+        :rtype: dict
+        """
+        network = self.get_network(network, fields=('network', 'extattrs'))
+        return {k: v['value'] for k, v in network['extattrs'].items()}
+
+    def get_host_record_by_mac(self, mac, fields=None):
+        """Get the host record with the given *mac*.
+
+        :param str mac: the MAC address
+        :param list fields: additional fields to return
+        :return: a host record
+        :rtype: dict
+        :raises exceptions.NotFoundError: if the host record cannot be found
+        """
+        query = {'mac:': mac}
+        records = self.search_host_records(query, fields=fields)
+        try:
+            return records[0]
+        except IndexError:
+            raise exceptions.NotFoundError('host record', mac)
+
     def get_a_records_by_field(self, field, value, fields=None):
         """Get the a records that have *value* for *field*.
 
@@ -516,44 +525,6 @@ class Infoblox(object):
             return records[0]
         except IndexError:
             raise exceptions.NotFoundError('A record', fqdn)
-
-    # Search utils
-
-    def search(self, resource, query, fields=None):
-        """Search for the given *resource* using the given *query*.
-
-        :param str resource: a resource name (e.g. "record:host")
-        :param dict query: fields and the values they must have
-        :param list fields: additional fields to return
-        :return: all host records matching the given query
-        :rtype: list
-        """
-        params = {'view': self.views['dns']}
-        params.update(query)
-        records = self.session.get(resource, params=params,
-                                   return_fields=fields)
-        return records
-
-    def search_host_records(self, query, fields=None):
-        """Search for host records that match the given *query*.
-
-        :param dict query: fields and the values they must have
-        :param list fields: additional fields to return
-        :return: all host records matching the given query
-        :rtype: list
-        """
-        return self.search('record:host', query=query, fields=fields)
-
-    def search_txt_records(self, query, fields=None):
-        """Search for a txt record with the given *fqdn*.
-
-        :param str fqdn: an FQDN
-        :return: zero or more txt records with the given FQDN
-        :rtype: list
-        """
-        return self.search('record:txt', query=query, fields=fields)
-
-    # Specific gets
 
     def get_address_by_ip(self, ip):
         """Get the IPv4 address record with the given *ip*.
@@ -631,6 +602,34 @@ class Infoblox(object):
         params['view'] = self.views['dns']
         record = self.session.get('record:host', params=params)
         return [r for r in record if 'name' in r]
+
+    # API Functions
+
+    def get_next_available_ips(self, network, count=1):
+        """Return the next *count* available IPs in a given *network*.
+
+        :param str network: network to search
+        :param int count: maximum number of available IPs to get
+        :return: list of available IPs in the given network
+        :rtype: list
+        """
+        network = self.get_network(network)
+        params = {
+            '_function': 'next_available_ip',
+            'num': count,
+        }
+        data = self.session.post(network['_ref'], params=params)
+        return data.get('ips', [])  # TODO: will none ever be returned?
+
+    def get_next_available_networks(self, container, cidr, count=1):
+        container = self.get_network_container(container)
+        params = {
+            '_function': 'next_available_network',
+            'cidr': cidr,
+            'count': count,
+        }
+        data = self.session.post(container['_ref'], params=params)
+        return data.get('networks', [])  # TODO: will none ever be returned?
 
     # High level actions
 

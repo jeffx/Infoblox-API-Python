@@ -19,27 +19,27 @@ class Session(requests.Session):
         :param str version: API version to use
         """
         super(Session, self).__init__()
-        self.endpoint = url, version
+        self.base_url = url, version
         self.page_size = page_size
 
     @property
-    def endpoint(self):
-        """Return the session's endpoint URL.
+    def base_url(self):
+        """Return the session's base URL.
 
         :return: complete base URL
         :rtype: str
         """
-        return self._endpoint
+        return self._base_url
 
-    @endpoint.setter
-    def endpoint(self, value):
-        """Set the sessions's endpoint URL by base URL and API version.
+    @base_url.setter
+    def base_url(self, value):
+        """Set the sessions's URL given a URL and an API version.
 
         :param tuple value: 2-tuple of base URL and API version
         """
         url, version = value
         path = 'wapi/v{0}/'.format(version)
-        self._endpoint = urllib.parse.urljoin(url, path)
+        self._base_url = urllib.parse.urljoin(url, path)
 
     @property
     def page_size(self):
@@ -54,9 +54,9 @@ class Session(requests.Session):
 
     # This is necessary because some of the URL paths contain colons, which
     # urllib naively interprets as a division between scheme and netloc.
-    def _urlize(self, path):
+    def urljoin(self, base, path):
         PATH = 2
-        components = list(urllib.parse.urlsplit(self.endpoint))
+        components = list(urllib.parse.urlsplit(base))
         # Either the path is relative or absolute
         if path.startswith('/'):
             new_path = path
@@ -82,8 +82,12 @@ class Session(requests.Session):
     def _raise_for_status_or_get_json(self, response):
         try:
             response.raise_for_status()
-        except Exception:
-            raise exceptions.ApiError(**response.json())
+        except Exception as original_exc:
+            try:
+                data = response.json()
+            except ValueError:
+                raise original_exc
+            raise exceptions.ApiError(**data)
         return response.json()
 
     def get(self, resource, page_id=None, return_fields=None,
@@ -114,7 +118,7 @@ class Session(requests.Session):
         params.update(fields)
 
         # Make the first request
-        url = self._urlize(resource)
+        url = self.urljoin(self.base_url, resource)
         response = super(Session, self).get(url, params=params, **kwargs)
         data = self._raise_for_status_or_get_json(response)
         results = data['result']
@@ -148,7 +152,7 @@ class Session(requests.Session):
         fields = self._get_fields(return_fields, return_fields_only)
         params.update(fields)
 
-        url = self._urlize(resource)
+        url = self.urljoin(self.base_url, resource)
         response = super(Session, self).post(url, params=params, **kwargs)
         return self._raise_for_status_or_get_json(response)
 
@@ -172,7 +176,7 @@ class Session(requests.Session):
         fields = self._get_fields(return_fields, return_fields_only)
         params.update(fields)
 
-        url = self._urlize(resource)
+        url = self.urljoin(self.base_url, resource)
         response = super(Session, self).put(url, params=params, **kwargs)
         return self._raise_for_status_or_get_json(response)
 
@@ -185,6 +189,6 @@ class Session(requests.Session):
         :raises ApiError: if the status code of the response is greater than
                           or equal to 400
         """
-        url = self._urlize(resource)
+        url = self.urljoin(self.base_url, resource)
         response = super(Session, self).delete(url, **kwargs)
         return self._raise_for_status_or_get_json(response)

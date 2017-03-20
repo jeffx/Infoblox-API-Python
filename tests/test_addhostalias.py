@@ -10,29 +10,36 @@ class TestAddHostAlias(testcasefixture.TestCaseWithFixture):
     @classmethod
     def setUpClass(cls):
         super(TestAddHostAlias, cls).setUpClass()
-        with responses.RequestsMock() as res:
-            res.add(responses.GET,
-                    'https://10.10.10.10/wapi/v1.6/record:host',
-                    body=cls.body,
-                    status=200)
-            res.add(responses.PUT,
-                    'https://10.10.10.10/wapi/v1.6/record:host/ZG5zLmhvc3QkLl9kZWZhdWx0LmNvbS5lcXVpZmF4LnVzLmxhYnMuY2lhLmFhYS10ZXN0aG9zdA:host.domain.com/default',
-                    status=200)
-            cls.ip = cls.iba_ipa.add_host_alias('host.domain.com',
-                                                'alias.domain.com')
+        responses.add(
+            responses.GET,
+            'https://10.10.10.10/wapi/v1.6/record:host',
+            body=cls.body,
+            status=200)
+        responses.add(
+            responses.PUT,
+            ('https://10.10.10.10/wapi/v1.6/record:host/ZG5zLmhvc3Qk'
+             'Ll9kZWZhdWx0LmNvbS5lcXVpZmF4LnVzLmxhYnMuY2lhLmFhYS10ZX'
+             'N0aG9zdA:host.domain.com/default'),
+            status=200)
+        cls.host_record = cls.iba_ipa.add_host_alias('host.domain.com',
+                                                     'alias.domain.com')
 
     def test_add_host_alias(self):
-        self.assertIsNone(self.ip)
+        self.assertIsNone(self.host_record)
 
     @responses.activate
     def test_add_host__alias_nohost(self):
-        responses.add(responses.GET,
-                      'https://10.10.10.10/wapi/v1.6/record:host',
-                      body='[]',
-                      status=200)
-        responses.add(responses.PUT,
-                      'https://10.10.10.10/wapi/v1.6/record:host/ZG5zLmhvc3QkLl9kZWZhdWx0LmNvbS5lcXVpZmF4LnVzLmxhYnMuY2lhLmFhYS10ZXN0aG9zdA:host.domain.com/default',
-                      status=200)
+        responses.add(
+            responses.GET,
+            'https://10.10.10.10/wapi/v1.6/record:host',
+            body='[]',
+            status=200)
+        responses.add(
+            responses.PUT,
+            ('https://10.10.10.10/wapi/v1.6/record:host/ZG5zLmhvc3Q'
+             'kLl9kZWZhdWx0LmNvbS5lcXVpZmF4LnVzLmxhYnMuY2lhLmFhYS10'
+             'ZXN0aG9zdA:host.domain.com/default'),
+            status=200)
         with self.assertRaises(infoblox.InfobloxNotFoundException):
             self.iba_ipa.add_host_alias('nohost.domain.com',
                                         'alias.domain.com')
