@@ -235,7 +235,7 @@ class GetHostTests(unittest.TestCase):
     @patch('infoblox.infoblox.Infoblox.get_host')
     def setUp(self, get_host_mock):
         self.get_host_mock = get_host_mock
-        self.result = invoke('hostrecord', 'get', 'a')
+        self.result = invoke('hostrecord', 'get_by_fqdn', 'a')
 
     def test_get_host_called_with_correct_fqdn(self):
         args, __ = self.get_host_mock.call_args
@@ -248,11 +248,28 @@ class GetHostTests(unittest.TestCase):
         self.assertEqual(self.result.exit_code, 0)
 
 
+class GetHostByAliasTests(unittest.TestCase):
+    @patch('infoblox.infoblox.Infoblox.get_host_by_alias')
+    def setUp(self, get_host_by_alias_mock):
+        self.get_host_by_alias_mock = get_host_by_alias_mock
+        self.result = invoke('hostrecord', 'get_by_alias', 'a')
+
+    def test_get_host_by_alias_called_with_correct_fqdn(self):
+        args, __ = self.get_host_by_alias_mock.call_args
+        self.assertEqual(args[0], 'a')
+
+    def test_get_host_by_alias_called_exactly_once(self):
+        self.assertEqual(self.get_host_by_alias_mock.call_count, 1)
+
+    def test_exit_code_is_zero(self):
+        self.assertEqual(self.result.exit_code, 0)
+
+
 class GetHostByIPTests(unittest.TestCase):
     @patch('infoblox.infoblox.Infoblox.get_host_by_ip')
     def setUp(self, get_host_by_ip_mock):
         self.get_host_by_ip_mock = get_host_by_ip_mock
-        self.result = invoke('hostrecord', 'by_ip', 'a')
+        self.result = invoke('hostrecord', 'get_by_ip', 'a')
 
     def test_get_host_by_ip_called_with_correct_ip(self):
         args, __ = self.get_host_by_ip_mock.call_args

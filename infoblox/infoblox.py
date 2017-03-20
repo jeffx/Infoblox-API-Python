@@ -612,6 +612,21 @@ class Infoblox(object):
             return r_json
         return r_json[0]
 
+    def get_host_by_alias(self, fqdn, fields=None, notFoundFail=True):
+        """ Implements IBA REST API call to retrieve host record fields by alias
+        Returns hash table of fields with field name as a hash key
+        :param fqdn: alias in FQDN
+        :param fields: comma-separated list of field names (optional)
+        """
+        r_json = self.util.get('record:host?alias={}'.format(fqdn),
+                               fields=fields,
+                               notFoundText="No hosts found: " + fqdn,
+                               notFoundFail=notFoundFail
+                               )
+        if r_json is None and notFoundFail is False:
+            return r_json
+        return r_json[0]
+
     def get_host_by_regexp(self, fqdn):
         """ Implements IBA REST API call to retrieve host records by fqdn regexp filter
         Returns array of host names in FQDN matched to given regexp filter
