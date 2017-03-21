@@ -1,5 +1,10 @@
 Infoblox Python API CHANGELOG
 =============================
+1.5.1
+-----
+
+* [Phillip Ferentinos] - Add ability to search host records by their aliases
+
 1.5.0
 -----
 
