@@ -145,14 +145,14 @@ def get_host_by_regexp(api, regexp):
 @click.argument('fqdn')
 @click.pass_obj
 def get_host_extattrs(api, fqdn):
-    '''get host extensible attributes'''
+    '''Get host extensible attributes'''
     click.echo('getting host extensible attributes %s ' % (fqdn))
     click.echo(api.get_host_extattrs(fqdn))
 
 @hostrecord.command('get')
 @click.argument('fqdn')
 @click.pass_obj
-def get_host(api,  fqdn):
+def get_host(api, fqdn):
     '''Get a host record.'''
     click.echo('get host record %s ' % (fqdn))
     click.echo(api.get_host(fqdn))
@@ -160,8 +160,8 @@ def get_host(api,  fqdn):
 @hostrecord.command('by_ip')
 @click.argument('ip')
 @click.pass_obj
-def get_host_by_ip(api,ip):
-    '''get a host by ip.'''
+def get_host_by_ip(api, ip):
+    '''Get a host by ip.'''
     click.echo('getting host record by ip %s ' % (ip))
     click.echo(api.get_host_by_ip(ip))
 
