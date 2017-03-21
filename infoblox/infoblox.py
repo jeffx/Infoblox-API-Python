@@ -618,26 +618,18 @@ class Infoblox(object):
         :param fqdn: alias in FQDN
         :param fields: comma-separated list of field names (optional)
         """
-        rest_url = 'https://' + self.iba_host + '/wapi/v' + \
-            self.iba_wapi_version + '/record:host?alias=' + \
-            fqdn + '&view=' + self.iba_dns_view
-
-        try:
-            r = self.session.get(url=rest_url)
-            r_json = r.json()
-            if r.status_code == 200:
-                if len(r_json) > 0:
-                    return r_json[0]
-                else:
-                    raise InfobloxNotFoundException(
-                        "No hosts found for alias: " + fqdn)
-            else:
-                if 'text' in r_json:
-                    raise InfobloxGeneralException(r_json['text'])
-                else:
-                    r.raise_for_status()
-        except ValueError:
-            raise InfobloxGeneralException(r)
+        r_json = self.util.get('record:host',
+                               query_params={
+                                   'alias': fqdn,
+                                   'view': self.iba_dns_view
+                               },
+                               fields=fields,
+                               notFoundText="No hosts found: " + fqdn,
+                               notFoundFail=notFoundFail
+                               )
+        if r_json is None and notFoundFail is False:
+            return r_json
+        return r_json[0]
 
     def get_host_by_regexp(self, fqdn):
         """ Implements IBA REST API call to retrieve host records by fqdn regexp filter
