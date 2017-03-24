@@ -60,16 +60,25 @@ def hostrecord():
     ''' HOST records.'''
     pass # pragma: no cover
 
-
 @hostrecord.command('get_by_fqdn')
 @click.argument('fqdn')
 @click.option('--return-fields',
               help='Comma-separated list of fields to include in output.')
 @click.pass_obj
 def get_by_fqdn(api, fqdn, return_fields):
+    '''Get a host record.'''
     data = api.get_host(fqdn, return_fields)
     click.echo(data)
 
+@hostrecord.command('get_by_alias')
+@click.argument('alias')
+@click.option('--return-fields',
+              help='Comma-separated list of fields to include in output.')
+@click.pass_obj
+def get_host_by_alias(api, alias, return_fields):
+    '''Get Host by Alias'''
+    data = api.get_host_by_alias(alias, return_fields)
+    click.echo(data)
 
 @hostrecord.command('get_by_ip')
 @click.argument('address')
@@ -77,9 +86,9 @@ def get_by_fqdn(api, fqdn, return_fields):
               help='Comma-separated list of fields to include in output.')
 @click.pass_obj
 def get_host_by_ip(api, address, return_fields):
+    '''Get Host by IP Address'''
     data = api.get_host_by_ip(address, return_fields)
     click.echo(data)
-
 
 @hostrecord.command('create')
 @click.argument('address')
@@ -89,7 +98,6 @@ def create_host_record(api, address, fqdn):
     '''Create a host record.'''
     click.echo('creating host record %s = %s' % (address, fqdn))
     api.create_host_record(address, fqdn)
-
 
 @hostrecord.command('delete')
 @click.argument('fqdn')
@@ -104,7 +112,7 @@ def delete_host_record(api, fqdn):
 @click.argument('alias_fqdn')
 @click.pass_obj
 def add_host_alias(api, host_fqdn, alias_fqdn):
-    '''add a host record.'''
+    '''Add a host record.'''
     click.echo('adding alias %s for host  %s' % (alias_fqdn, host_fqdn,))
     api.add_host_alias(host_fqdn, alias_fqdn)
 
@@ -121,7 +129,7 @@ def delete_host_alias(api, host_fqdn, host_alias):
 @click.argument('extattrs')
 @click.pass_obj
 def get_host_by_extattrs(api, extattrs):
-    '''geting host by extensible attributes.'''
+    '''Get host by extensible attributes.'''
     click.echo('getting host by extensible attributes')
     api.get_host_by_extattrs(extattrs)
 
@@ -129,33 +137,34 @@ def get_host_by_extattrs(api, extattrs):
 @click.argument('regexp')
 @click.pass_obj
 def get_host_by_regexp(api, regexp):
-    '''geting host by fqdn regexp filter.'''
+    '''Get host by fqdn regexp filter.'''
     click.echo('getting host by fqdn regexp filter')
     api.get_host_by_regexp(regexp)
+
+@hostrecord.command('extattrs')
+@click.argument('fqdn')
+@click.pass_obj
+def get_host_extattrs(api, fqdn):
+    '''Get host extensible attributes'''
+    click.echo('getting host extensible attributes %s ' % (fqdn))
+    click.echo(api.get_host_extattrs(fqdn))
 
 @hostrecord.command('get')
 @click.argument('fqdn')
 @click.pass_obj
-def get_host(api,  fqdn):
-    '''get a host record.'''
+def get_host(api, fqdn):
+    '''Get a host record.'''
     click.echo('get host record %s ' % (fqdn))
     click.echo(api.get_host(fqdn))
 
 @hostrecord.command('by_ip')
 @click.argument('ip')
 @click.pass_obj
-def get_host_by_ip(api,ip):
-    '''get a host by ip.'''
+def get_host_by_ip(api, ip):
+    '''Get a host by ip.'''
     click.echo('getting host record by ip %s ' % (ip))
     click.echo(api.get_host_by_ip(ip))
 
-@hostrecord.command('extattrs')
-@click.argument('fqdn')
-@click.pass_obj
-def get_host_extattrs(api, fqdn):
-    '''get host extensible attributes'''
-    click.echo('getting host extensible attributes %s ' % (fqdn))
-    click.echo(api.get_host_extattrs(fqdn))
 
 @cli.group()
 def network():
