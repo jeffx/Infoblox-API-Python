@@ -1,7 +1,7 @@
 Infoblox Python API CHANGELOG
 =============================
 
-???
+1.6.0
 ---
 
 * [Robert Grant] - Added 2.6 to the trove classifiers (we may as well get the credit!)
