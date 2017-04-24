@@ -1,5 +1,12 @@
 Infoblox Python API CHANGELOG
 =============================
+
+???
+---
+
+* [Robert Grant] - Added 2.6 to the trove classifiers (we may as well get the credit!)
+* [Robert Grant] - Added logging of failed requests via use of a custom Session class
+
 1.5.1
 -----
 

@@ -16,6 +16,11 @@
 import re
 import requests
 import json
+import logging
+import collections
+
+
+logger = logging.getLogger(__name__)
 
 
 class InfobloxException(Exception):
@@ -44,6 +49,35 @@ class InfobloxGeneralException(InfobloxException):
 
 class InfobloxBadInputParameter(InfobloxException):
     pass
+
+
+class Session(requests.Session):
+
+    def request(self, method, url, *args, **kwargs):
+        """Do a request and return the response.
+
+        Check requests.Session docs for possible exceptions
+
+        :param str method: the method of the request
+        :param str url: the url to request
+        :return: response data
+        :rtype: object
+        """
+        try:
+            response = super(Session, self).request(method, url, *args, **kwargs)
+            # inject things into the locals namespace for potential logging
+            content = response.content
+            status = response.status_code
+            response.raise_for_status()
+        except Exception as e:
+            logger.exception(e)
+            data = collections.defaultdict(lambda: None)
+            data.update(locals())
+            logger.error('Failed request details: url={0[url]!r}, '
+                         'method={0[method]!r}, response-status={0[status]!r}, '
+                         'response-content={0[content]!r}'.format(data))
+            raise
+        return response
 
 
 class Infoblox(object):
@@ -118,7 +152,7 @@ class Infoblox(object):
                          iba_verify_ssl)
 
     def _setup_session(self):
-        self.session = requests.Session()
+        self.session = Session()
         self.session.auth = (self.iba_user, self.iba_password)
         self.session.verify = self.iba_verify_ssl
 
