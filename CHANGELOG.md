@@ -1,5 +1,11 @@
 Infoblox Python API CHANGELOG
 =============================
+
+???
+---
+
+* [Robert Grant] - Added logging of failed requests via use of a custom Session class
+
 1.5.1
 -----
 
