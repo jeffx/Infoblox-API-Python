@@ -86,7 +86,8 @@ class Session(requests.Session):
             try:
                 data = response.json()
             except ValueError:
-                raise exceptions.InfobloxException() from original_exc
+                msg = 'An unexpected error occured during a request'
+                raise exceptions.InfobloxException(msg) from original_exc
             raise exceptions.ApiError(**data)
         return response.json()
 
