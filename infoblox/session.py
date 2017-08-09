@@ -86,7 +86,7 @@ class Session(requests.Session):
             try:
                 data = response.json()
             except ValueError:
-                raise original_exc
+                raise exceptions.InfobloxException() from original_exc
             raise exceptions.ApiError(**data)
         return response.json()
 
