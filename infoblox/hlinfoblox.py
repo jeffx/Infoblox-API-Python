@@ -94,22 +94,21 @@ class HighLevelInfobloxActions(object):
             if host_record:
                 dhcp_cfg = str(host_record['ipv4addrs'][0]['configure_for_dhcp'])
             
-                if dhcp_cfg == 'True':
+                if dhcp_cfg:
                     print(" Host record for [%s] already exist" % host_record)
                     break
 
                 else: 
                     print("    Updating host record - converting lease to fixedaddress")
-                    for host_host_ipv4addr in host_record['ipv4addrs']:
+                    for ipv4addr in host_record['ipv4addrs']:
                         fields = {
                             'configure_for_dhcp': True,
-                            'match_client': 'MAC_ADDRESS',
+                            # 'match_client': 'MAC_ADDRESS',
                             'mac': mac
                         }
                         self.api.update_record(host_record,
                                            fields=fields,
                                            confirm=confirm)
-                    break
             else:
                 print("   Creating host record - Converting lease to fixedaddress")
                 payload = {
@@ -133,7 +132,6 @@ class HighLevelInfobloxActions(object):
                    'view': self.iba_dns_view,
                    'ipv4addrs': [{'ipv4addr': address,
                                   'configure_for_dhcp': True,
-                                  'match_client': 'MAC_ADDRESS',
                                   'mac': mac
                                   }]}
         print("host_data [%s]" % (payload))
