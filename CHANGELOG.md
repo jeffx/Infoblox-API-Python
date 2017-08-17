@@ -1,7 +1,7 @@
 Infoblox Python API CHANGELOG
 =============================
 
-x.x.x
+1.6.1
 ---
 * [Wei Lei] - Update hlinfoblox.py lease2fixed command.
 
