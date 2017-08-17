@@ -101,7 +101,7 @@ class HighLevelInfobloxActions(object):
                 else: 
                     print("    Updating host record - converting lease to fixedaddress")
                     for ipv4addr in host_record['ipv4addrs']:
-                        if ipv4addr == address:
+                        if ipv4addr['ip4addr'] == address:
                             fields = {
                                 'configure_for_dhcp': True,
                                 'mac': mac
