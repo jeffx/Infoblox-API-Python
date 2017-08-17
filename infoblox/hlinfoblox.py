@@ -5,6 +5,7 @@
 # License stuff
 #
 
+import json
 from .infoblox import Infoblox, InfobloxGeneralException, Util
 
 # import more stuff
@@ -88,14 +89,28 @@ class HighLevelInfobloxActions(object):
         for name in names:
             print("Host Name [%s]" % (name))
             host_record = self.api.get_host(name, notFoundFail=False)
-            a_record = self.api.get_a_record_by_ip(address)
             print("Host Record [%s]" % (host_record))
-            print("A record [%s]" % (a_record))
-            if host_record is None and a_record is None:
-                print("    Cannot find record:host or a:record for [%s], exit" % (name))
-                # self._create_host_record(address, fqdn, mac)
+
+            if host_record:
+                dhcp_cfg = str(host_record['ipv4addrs'][0]['configure_for_dhcp'])
+            
+                if dhcp_cfg:
+                    print(" Host record for [%s] already exist" % host_record)
+                    break
+
+                else: 
+                    print("    Updating host record - converting lease to fixedaddress")
+                    for ipv4addr in host_record['ipv4addrs']:
+                        if ipv4addr['ipv4addr'] == address:
+                            fields = {
+                                'configure_for_dhcp': True,
+                                'mac': mac
+                            }
+                            self.api.update_record(host_record,
+                                               fields=fields,
+                                               confirm=confirm)
             else:
-                print("    Converting lease to fixedaddress")
+                print("   Creating host record - Converting lease to fixedaddress")
                 payload = {
                     'name': fqdn,
                     'ipv4addrs' : [{'ipv4addr': address,
@@ -107,6 +122,7 @@ class HighLevelInfobloxActions(object):
                 status_code = self.api.util.post(uri, payload, fields)
                 break
 
+
     def _create_host_record(self, address, fqdn, mac):
         if fqdn is None:
             raise(InfobloxGeneralException(
@@ -116,7 +132,6 @@ class HighLevelInfobloxActions(object):
                    'view': self.iba_dns_view,
                    'ipv4addrs': [{'ipv4addr': address,
                                   'configure_for_dhcp': True,
-                                  'match_client': 'MAC_ADDRESS',
                                   'mac': mac
                                   }]}
         print("host_data [%s]" % (payload))
