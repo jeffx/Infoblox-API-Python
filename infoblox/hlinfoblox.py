@@ -101,14 +101,14 @@ class HighLevelInfobloxActions(object):
                 else: 
                     print("    Updating host record - converting lease to fixedaddress")
                     for ipv4addr in host_record['ipv4addrs']:
-                        fields = {
-                            'configure_for_dhcp': True,
-                            # 'match_client': 'MAC_ADDRESS',
-                            'mac': mac
-                        }
-                        self.api.update_record(host_record,
-                                           fields=fields,
-                                           confirm=confirm)
+                        if ipv4addr == address:
+                            fields = {
+                                'configure_for_dhcp': True,
+                                'mac': mac
+                            }
+                            self.api.update_record(host_record,
+                                               fields=fields,
+                                               confirm=confirm)
             else:
                 print("   Creating host record - Converting lease to fixedaddress")
                 payload = {
