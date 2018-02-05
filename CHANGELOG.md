@@ -1,6 +1,11 @@
 Infoblox Python API CHANGELOG
 =============================
 
+1.6.2
+---
+* [Phillip Ferentinos] - Add `get_range` endpoint.
+
+
 1.6.1
 ---
 * [Wei Lei] - Update hlinfoblox.py lease2fixed command.
