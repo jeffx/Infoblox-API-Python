@@ -1,0 +1,13 @@
+[
+  {
+    "_ref": "range/ZG5zLmRoY3BfcmFuZ2UkMTAuODAuMjA2LjIxLzEwLjgwLjIwNi4yNTQvLy8wLw:192.168.10.21/192.168.10.254/default",
+    "end_addr": "192.168.10.254",
+    "member": {
+      "_struct": "dhcpmember",
+      "ipv4addr": "192.168.10.18",
+      "ipv6addr": null,
+      "name": "grid.domain.com"
+    },
+    "start_addr": "192.168.10.21"
+  }
+]

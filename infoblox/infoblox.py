@@ -1306,6 +1306,19 @@ class Infoblox(object):
     def update_record(self, record, fields, confirm):
         self.util.put(record, fields, confirm)
 
+    def get_range(self, network, fields=None, not_found_fail=True):
+        r_json = self.util.get(
+            'range',
+            query_params={
+                'network': network,
+            },
+            fields=fields,
+            notFoundText="No requested network found: " + network,
+            notFoundFail=not_found_fail
+        )
+
+        return r_json
+
 
 class Util(object):
 
