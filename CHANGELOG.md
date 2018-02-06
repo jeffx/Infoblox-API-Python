@@ -1,10 +1,14 @@
 Infoblox Python API CHANGELOG
 =============================
 
+???
+---
+* [Phillip Ferentinos] - Add support to `Util` class for `delete_by_ref`
+* [Phillip Ferentinos] - Add `create`, `get`, `delete` support for Fixed Addresses
+
 1.6.2
 ---
 * [Phillip Ferentinos] - Add `get_range` endpoint.
-
 
 1.6.1
 ---

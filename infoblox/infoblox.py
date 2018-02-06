@@ -1307,6 +1307,10 @@ class Infoblox(object):
         self.util.put(record, fields, confirm)
 
     def get_range(self, network, fields=None, not_found_fail=True):
+        """Retrieve a DHCP Range by CIDR network
+        :param network: Network (in CIDR format) to get the DHCP Range for
+        """
+
         r_json = self.util.get(
             'range',
             query_params={
@@ -1317,6 +1321,58 @@ class Infoblox(object):
             notFoundFail=not_found_fail
         )
 
+        return r_json
+
+    def create_fixed_address(self, ipv4addr, mac,
+                             fields=None, confirm=True):
+        """Create a Fixed Address Record
+        :param ipv4addr: IPv4 Address of object to put on the Record
+        :param mac: Mac Address of object to put on the Record
+        """
+
+        r_json = self.util.post(
+            'fixedaddress',
+            payload={
+                'mac': mac,
+                'ipv4addr': ipv4addr,
+            },
+            fields=fields,
+            confirm=confirm
+        )
+        return r_json
+
+    def get_fixed_address(self, ipv4addr, mac,
+                          fields=None, not_found_fail=True):
+        """Get a Fixed Address Record
+        :param ipv4addr: IPv4 Address of object to get
+        :param mac: Mac Address of object to get
+        """
+
+        notFoundText = "Fixed Address not found for %s:%s" % (ipv4addr, mac)
+        r_json = self.util.get(
+            'fixedaddress',
+            query_params={
+                'mac': mac,
+                'ipv4addr': ipv4addr,
+            },
+            fields=fields,
+            notFoundText=notFoundText,
+            notFoundFail=not_found_fail
+        )
+        return r_json
+
+    def delete_fixed_address(self, ref, not_found_fail=True):
+        """Delete a Fixed Address Record
+        :param ipv4addr: IPv4 Address of object to get
+        :param mac: Mac Address of object to get
+        """
+
+        notFoundText = "Fixed Address not found for %s" % (ref)
+        r_json = self.util.delete_by_ref(
+            ref,
+            notFoundText=notFoundText,
+            notFoundFail=not_found_fail
+        )
         return r_json
 
 
@@ -1453,6 +1509,39 @@ class Util(object):
             r_json = r.json()
             if r.status_code == 200 or r.status_code == 201:
                 return r_json
+            else:
+                if 'text' in r_json:
+                    raise InfobloxGeneralException(r_json['text'])
+                else:
+                    r.raise_for_status()
+        except ValueError:
+            raise InfobloxGeneralException(r)
+
+    def delete_by_ref(self, ref, notFoundText=None, notFoundFail=True):
+        """Execute a get operation.
+        :param ref: Reference to object to delete.
+        :param notFoundText: Exception text when get returns no data.
+        :param notFoundFail: Raise an exception if nothing is found.
+        """
+
+        rest_url = 'https://%s/wapi/v%s/%s' % (self.iba_host, self.iba_wapi_version, ref)
+
+        try:
+            r = self.session.delete(url=rest_url)
+        except requests.exceptions.HTTPError as e:
+            if notFoundFail:
+                raise InfobloxNotFoundException(notFoundText)
+            else:
+                raise e
+            r_json = r.json()
+
+            if r.status_code == 200:
+                if len(r_json) > 0:
+                    return r_json
+                elif notFoundFail:
+                    raise InfobloxNotFoundException(notFoundText)
+                else:
+                    return None
             else:
                 if 'text' in r_json:
                     raise InfobloxGeneralException(r_json['text'])
