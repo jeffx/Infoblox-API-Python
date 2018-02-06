@@ -1348,7 +1348,7 @@ class Infoblox(object):
         :param mac: Mac Address of object to get
         """
 
-        notFoundText = "Fixed Address not found for %s:%s" % (ipv4addr, mac)
+        notFoundText = "Fixed Address not found for IP: %s, MAC: %s" % (ipv4addr, mac)
         r_json = self.util.get(
             'fixedaddress',
             query_params={
@@ -1367,11 +1367,48 @@ class Infoblox(object):
         :param mac: Mac Address of object to get
         """
 
-        notFoundText = "Fixed Address not found for %s" % (ref)
+        notFoundText = "Fixed Address not found for ref: %s" % (ref)
         r_json = self.util.delete_by_ref(
             ref,
             notFoundText=notFoundText,
             notFoundFail=not_found_fail
+        )
+        return r_json
+
+    def get_grid(self, query_params=None, fields=None, not_found_fail=True):
+        """Get a Grid Object
+        :param query_params: Dictionary of searchable fields on Grid object.
+        :param fields: Fields to return from the Grid object
+        """
+
+        notFoundText = "No grid found."
+        r_json = self.util.get(
+            'grid',
+            query_params=query_params,
+            fields=fields,
+            notFoundText=notFoundText,
+            notFoundFail=not_found_fail
+        )
+        return r_json
+
+    def restart_grid_services(self, ref, payload):
+        """Restart Grid Services
+        :param ref: Reference to a Grid object.
+        :param payload: Dictionary of fields used to restart services.
+        """
+        uri = '%s?_function=restartservices' % ref
+        r_json = self.util.post(
+            uri=uri,
+            payload=payload,
+            fields=None
+        )
+        return r_json
+
+    def get_pending_changes(self, fields=None, notFoundFail=False):
+        r_json = self.util.get(
+            uri='grid:servicerestart:request:changedobject',
+            fields=fields,
+            notFoundFail=notFoundFail,
         )
         return r_json
 
