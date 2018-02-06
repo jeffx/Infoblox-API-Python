@@ -1405,11 +1405,29 @@ class Infoblox(object):
         return r_json
 
     def get_pending_changes(self, fields=None, notFoundFail=False):
+        """ Get pending changes on the Grid
+        """
         r_json = self.util.get(
             uri='grid:servicerestart:request:changedobject',
             fields=fields,
             notFoundFail=notFoundFail,
         )
+        return r_json
+
+    def get_lease(self, query_params=None, fields=None, not_found_fail=True):
+        """Retrieve a DHCP Lease
+        :param query_params: dictionary of fields to query lease against
+        :param fields: comma-separated list of field names (optional)
+        :param not_found_fail: Raise an exception if nothing is found.
+        """
+        r_json = self.util.get(
+            'lease',
+            query_params=query_params,
+            fields=fields,
+            notFoundText="No Lease found.",
+            notFoundFail=not_found_fail
+        )
+
         return r_json
 
 

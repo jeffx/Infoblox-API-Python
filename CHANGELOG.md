@@ -6,6 +6,7 @@ Infoblox Python API CHANGELOG
 * [Phillip Ferentinos] - Add support to `Util` class for `delete_by_ref`
 * [Phillip Ferentinos] - Add `create`, `get`, `delete` support for Fixed Addresses
 * [Phillip Ferentinos] - Add `get_grid`, `restart_grid_services`, `get_pending_changes` support for Grid Members
+* [Phillip Ferentinos] - Add `get_lease` support for DHCP Leases
 
 1.6.2
 ---
