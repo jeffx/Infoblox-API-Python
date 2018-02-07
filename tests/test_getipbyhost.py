@@ -17,7 +17,6 @@ class TestGetIpByHost(testcasefixture.TestCaseWithFixture):
                     status=200)
             cls.ip = cls.iba_ipa.get_ip_by_host('192.168.40.10')
 
-
     def test_get_ip_by_host(self):
         response_test_list = ['192.168.40.10']
         self.assertListEqual(self.ip, response_test_list)

@@ -5,7 +5,7 @@ from . import testcasefixture
 
 
 class TestGetRange(testcasefixture.TestCaseWithFixture):
-    fixture_name = 'get_range'
+    fixture_name = 'range_get'
 
     @classmethod
     def setUpClass(cls):
@@ -32,7 +32,7 @@ class TestGetRange(testcasefixture.TestCaseWithFixture):
     def test_get_range_bad_network(self):
         responses.add(responses.GET,
                       'https://10.10.10.10/wapi/v1.6/range',
-                      body=[],
+                      body='[]',
                       status=200)
         with self.assertRaises(infoblox.InfobloxNotFoundException):
             self.iba_ipa.get_range(network='not.a.network')

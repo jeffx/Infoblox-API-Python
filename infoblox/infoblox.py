@@ -1361,26 +1361,28 @@ class Infoblox(object):
         )
         return r_json
 
-    def delete_fixed_address(self, ref, not_found_fail=True):
+    def delete_fixed_address(self, ipv4addr, mac, not_found_fail=True):
         """Delete a Fixed Address Record
-        :param ipv4addr: IPv4 Address of object to get
-        :param mac: Mac Address of object to get
+        :param ipv4addr: IPv4 Address of object to delete
+        :param mac: Mac Address of object to delete
         """
-
+        ref = self.get_fixed_address(ipv4addr=ipv4addr, mac=mac, not_found_fail=not_found_fail)
         notFoundText = "Fixed Address not found for ref: %s" % (ref)
         r_json = self.util.delete_by_ref(
-            ref,
+            ref[0]['_ref'],
             notFoundText=notFoundText,
             notFoundFail=not_found_fail
         )
         return r_json
 
-    def get_grid(self, query_params=None, fields=None, not_found_fail=True):
+    def get_grid(self, name=None, fields=None, not_found_fail=True):
         """Get a Grid Object
         :param query_params: Dictionary of searchable fields on Grid object.
         :param fields: Fields to return from the Grid object
         """
-
+        query_params = None
+        if name is not None:
+            query_params = {'name': name}
         notFoundText = "No grid found."
         r_json = self.util.get(
             'grid',
@@ -1391,12 +1393,13 @@ class Infoblox(object):
         )
         return r_json
 
-    def restart_grid_services(self, ref, payload):
+    def restart_grid_services(self, payload, name=None):
         """Restart Grid Services
-        :param ref: Reference to a Grid object.
+        :param name: Name of a Grid object.
         :param payload: Dictionary of fields used to restart services.
         """
-        uri = '%s?_function=restartservices' % ref
+        ref = self.get_grid(name=name)
+        uri = '%s?_function=restartservices' % ref[0]['_ref']
         r_json = self.util.post(
             uri=uri,
             payload=payload,
