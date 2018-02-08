@@ -116,6 +116,14 @@ class Infoblox(object):
     get_network_extattrs
     update_network_extattrs
     delete_network_extattrs
+    get_range
+    create_fixed_address
+    get_fixed_address
+    delete_fixed_address
+    get_grid
+    restart_grid_services
+    get_pending_changes
+    get_lease
     """
 
     def __init__(self,
@@ -1305,11 +1313,10 @@ class Infoblox(object):
     def update_record(self, record, fields, confirm):
         self.util.put(record, fields, confirm)
 
-    def get_range(self, network, fields=None, not_found_fail=True):
+    def get_dhcp_range(self, network, fields=None, not_found_fail=True):
         """Retrieve a DHCP Range by CIDR network
         :param network: Network (in CIDR format) to get the DHCP Range for
         """
-
         r_json = self.util.get(
             'range',
             query_params={
@@ -1328,7 +1335,6 @@ class Infoblox(object):
         :param ipv4addr: IPv4 Address of object to put on the Record
         :param mac: Mac Address of object to put on the Record
         """
-
         r_json = self.util.post(
             'fixedaddress',
             payload={
@@ -1346,7 +1352,6 @@ class Infoblox(object):
         :param ipv4addr: IPv4 Address of object to get
         :param mac: Mac Address of object to get
         """
-
         notFoundText = "Fixed Address not found for IP: %s, MAC: %s" % (ipv4addr, mac)
         r_json = self.util.get(
             'fixedaddress',

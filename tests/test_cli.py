@@ -388,23 +388,6 @@ class GetNetworkByIpTests(unittest.TestCase):
         self.assertEqual(self.result.exit_code, 0)
 
 
-class GetNetworkByIpTests(unittest.TestCase):
-    @patch('infoblox.infoblox.Infoblox.get_network_by_ip')
-    def setUp(self, get_network_by_ip_mock):
-        self.get_network_by_ip_mock = get_network_by_ip_mock
-        self.result = invoke('network', 'by_ip', 'a')
-
-    def test_get_network_by_ip_called_with_correct_ip(self):
-        args, __ = self.get_network_by_ip_mock.call_args
-        self.assertEqual(args[0], 'a')
-
-    def test_get_network_by_ip_called_exactly_once(self):
-        self.assertEqual(self.get_network_by_ip_mock.call_count, 1)
-
-    def test_exit_code_is_zero(self):
-        self.assertEqual(self.result.exit_code, 0)
-
-
 class GetNetworkByExtattrsTests(unittest.TestCase):
     @patch('infoblox.infoblox.Infoblox.get_network_by_extattrs')
     def setUp(self, get_network_by_extattrs_mock):
@@ -641,6 +624,129 @@ class GetIpByHostTests(unittest.TestCase):
 
     def test_get_ip_by_host_called_exactly_once(self):
         self.assertEqual(self.get_ip_by_host_mock.call_count, 1)
+
+    def test_exit_code_is_zero(self):
+        self.assertEqual(self.result.exit_code, 0)
+
+
+class GetDhcpRangeTests(unittest.TestCase):
+    @patch('infoblox.infoblox.Infoblox.get_dhcp_range')
+    def setUp(self, get_dhcp_range_mock):
+        self.get_dhcp_range_mock = get_dhcp_range_mock
+        self.result = invoke('range', 'get', '0.0.0.0/24')
+
+    def test_get_dhcp_range_mock_called_with_correct_network(self):
+        args, __ = self.get_dhcp_range_mock.call_args
+        self.assertEqual(args[0], '0.0.0.0/24')
+
+    def test_get_dhcp_range_mock_called_exactly_once(self):
+        self.assertEqual(self.get_dhcp_range_mock.call_count, 1)
+
+    def test_exit_code_is_zero(self):
+        self.assertEqual(self.result.exit_code, 0)
+
+
+class GetFixedAddressTests(unittest.TestCase):
+    @patch('infoblox.infoblox.Infoblox.get_fixed_address')
+    def setUp(self, get_fixed_address_mock):
+        self.get_fixed_address_mock = get_fixed_address_mock
+        self.result = invoke('fixedaddress', 'get', '0.0.0.0', 'aa:bb:cc:dd:ee:ff')
+
+    def test_get_fixed_address_mock_called_with_correct_ipv4addr(self):
+        args, __ = self.get_fixed_address_mock.call_args
+        self.assertEqual(args[0], '0.0.0.0')
+
+    def test_get_fixed_address_mock_called_with_correct_mac(self):
+        args, __ = self.get_fixed_address_mock.call_args
+        self.assertEqual(args[1], 'aa:bb:cc:dd:ee:ff')
+
+    def test_get_fixed_address_mock_called_exactly_once(self):
+        self.assertEqual(self.get_fixed_address_mock.call_count, 1)
+
+    def test_exit_code_is_zero(self):
+        self.assertEqual(self.result.exit_code, 0)
+
+
+class CreateFixedAddressTests(unittest.TestCase):
+    @patch('infoblox.infoblox.Infoblox.create_fixed_address')
+    def setUp(self, create_fixed_address_mock):
+        self.create_fixed_address_mock = create_fixed_address_mock
+        self.result = invoke('fixedaddress', 'create', '0.0.0.0', 'aa:bb:cc:dd:ee:ff')
+
+    def test_create_fixed_address_mock_called_with_correct_ipv4addr(self):
+        args, __ = self.create_fixed_address_mock.call_args
+        self.assertEqual(args[0], '0.0.0.0')
+
+    def test_create_fixed_address_mock_called_with_correct_mac(self):
+        args, __ = self.create_fixed_address_mock.call_args
+        self.assertEqual(args[1], 'aa:bb:cc:dd:ee:ff')
+
+    def test_create_fixed_address_mock_called_exactly_once(self):
+        self.assertEqual(self.create_fixed_address_mock.call_count, 1)
+
+    def test_exit_code_is_zero(self):
+        self.assertEqual(self.result.exit_code, 0)
+
+
+class DeleteFixedAddressTests(unittest.TestCase):
+    @patch('infoblox.infoblox.Infoblox.delete_fixed_address')
+    def setUp(self, delete_fixed_address_mock):
+        self.delete_fixed_address_mock = delete_fixed_address_mock
+        self.result = invoke('fixedaddress', 'create', '0.0.0.0', 'aa:bb:cc:dd:ee:ff')
+
+    def test_delete_fixed_address_mock_called_with_correct_ipv4addr(self):
+        args, __ = self.delete_fixed_address_mock.call_args
+        self.assertEqual(args[0], '0.0.0.0')
+
+    def test_delete_fixed_address_mock_called_with_correct_mac(self):
+        args, __ = self.delete_fixed_address_mock.call_args
+        self.assertEqual(args[1], 'aa:bb:cc:dd:ee:ff')
+
+    def test_delete_fixed_address_mock_called_exactly_once(self):
+        self.assertEqual(self.delete_fixed_address_mock.call_count, 1)
+
+    def test_exit_code_is_zero(self):
+        self.assertEqual(self.result.exit_code, 0)
+
+
+class GetGridWithoutNameTests(unittest.TestCase):
+    @patch('infoblox.infoblox.Infoblox.get_grid')
+    def setUp(self, get_grid_mock):
+        self.get_grid_mock = get_grid_mock
+        self.result = invoke('grid', 'get')
+
+    def test_get_grid_mock_called_exactly_once(self):
+        self.assertEqual(self.get_grid_mock.call_count, 1)
+
+    def test_exit_code_is_zero(self):
+        self.assertEqual(self.result.exit_code, 0)
+
+
+class GetGridNameWithNameTests(unittest.TestCase):
+    @patch('infoblox.infoblox.Infoblox.get_grid')
+    def setUp(self, get_grid_mock):
+        self.get_grid_mock = get_grid_mock
+        self.result = invoke('grid', 'get', 'name')
+
+    def test_get_grid_mock_called_with_correct_ipv4addr(self):
+        args, __ = self.get_grid_mock.call_args
+        self.assertEqual(args[0], 'name')
+
+    def test_get_grid_mock_called_exactly_once(self):
+        self.assertEqual(self.get_grid_mock.call_count, 1)
+
+    def test_exit_code_is_zero(self):
+        self.assertEqual(self.result.exit_code, 0)
+
+
+class GetGridTests(unittest.TestCase):
+    @patch('infoblox.infoblox.Infoblox.get_grid')
+    def setUp(self, delete_fixed_address_mock):
+        self.delete_fixed_address_mock = delete_fixed_address_mock
+        self.result = invoke('grid', 'get')
+
+    def test_delete_fixed_address_mock_called_exactly_once(self):
+        self.assertEqual(self.create_fixed_address_mock.call_count, 1)
 
     def test_exit_code_is_zero(self):
         self.assertEqual(self.result.exit_code, 0)
