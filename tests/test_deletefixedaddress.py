@@ -12,16 +12,12 @@ class TestDeleteFixedAddress(testcasefixture.TestCaseWithFixture):
         super(TestDeleteFixedAddress, cls).setUpClass()
         cls.delete_url = ('https://10.10.10.10/wapi/v1.6/fixedaddress/'
                           'ZG5zLmZpeGVkX2FkZHJlc3MkMTAuNjMuMTU4Ljc5LjAuLg:192.168.10.1/default')
+        cls.get_url = 'https://10.10.10.10/wapi/v1.6/fixedaddress'
 
     @responses.activate
     def test_host_delete(self):
-        responses.add(responses.GET,
-                      'https://10.10.10.10/wapi/v1.6/fixedaddress',
-                      body=self.body,
-                      status=200)
-        responses.add(responses.DELETE,
-                      self.delete_url,
-                      status=200)
+        responses.add(responses.GET, self.get_url, body=self.body, status=200)
+        responses.add(responses.DELETE, self.delete_url, status=200)
         self.ip = self.iba_ipa.delete_fixed_address(
             ipv4addr='192.168.10.1',
             mac='aa:bb:cc:dd:ee:ff',
@@ -30,10 +26,7 @@ class TestDeleteFixedAddress(testcasefixture.TestCaseWithFixture):
 
     @responses.activate
     def test_host_delete_hostnotfound(self):
-        responses.add(responses.GET,
-                      'https://10.10.10.10/wapi/v1.6/fixedaddress',
-                      body='[]',
-                      status=200)
+        responses.add(responses.GET, self.get_url, body='[]', status=200)
         responses.add(responses.DELETE,
                       self.delete_url,
                       status=200)
@@ -45,13 +38,8 @@ class TestDeleteFixedAddress(testcasefixture.TestCaseWithFixture):
 
     @responses.activate
     def test_host_delete_servererror(self):
-        responses.add(responses.GET,
-                      'https://10.10.10.10/wapi/v1.6/fixedaddress',
-                      body=self.body,
-                      status=500)
-        responses.add(responses.DELETE,
-                      self.delete_url,
-                      status=200)
+        responses.add(responses.GET, self.get_url, body=self.body, status=500)
+        responses.add(responses.DELETE, self.delete_url, status=200)
         with self.assertRaises(HTTPError):
             self.iba_ipa.delete_fixed_address(
                 ipv4addr='192.168.10.1',
