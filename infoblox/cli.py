@@ -439,7 +439,7 @@ def restart_grid_services(api, query_params, name):
         return
     params = process_query_params(query_params)
     click.echo('Restarting Grid Services..')
-    click.echo(api.get_grid(params, name=name))
+    click.echo(api.restart_grid_services(params, name=name))
 
 
 @grid.command('pending_changes')

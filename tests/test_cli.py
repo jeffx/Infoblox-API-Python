@@ -1,5 +1,5 @@
 from click.testing import CliRunner
-import responses
+
 try:
     import unittest2 as unittest
 except ImportError:
@@ -633,7 +633,7 @@ class GetDhcpRangeTests(unittest.TestCase):
     @patch('infoblox.infoblox.Infoblox.get_dhcp_range')
     def setUp(self, get_dhcp_range_mock):
         self.get_dhcp_range_mock = get_dhcp_range_mock
-        self.result = invoke('range', 'get', '0.0.0.0/24')
+        self.result = invoke('dhcp', 'get', '0.0.0.0/24')
 
     def test_get_dhcp_range_mock_called_with_correct_network(self):
         args, __ = self.get_dhcp_range_mock.call_args
@@ -692,7 +692,7 @@ class DeleteFixedAddressTests(unittest.TestCase):
     @patch('infoblox.infoblox.Infoblox.delete_fixed_address')
     def setUp(self, delete_fixed_address_mock):
         self.delete_fixed_address_mock = delete_fixed_address_mock
-        self.result = invoke('fixedaddress', 'create', '0.0.0.0', 'aa:bb:cc:dd:ee:ff')
+        self.result = invoke('fixedaddress', 'delete', '0.0.0.0', 'aa:bb:cc:dd:ee:ff')
 
     def test_delete_fixed_address_mock_called_with_correct_ipv4addr(self):
         args, __ = self.delete_fixed_address_mock.call_args
@@ -726,11 +726,11 @@ class GetGridNameWithNameTests(unittest.TestCase):
     @patch('infoblox.infoblox.Infoblox.get_grid')
     def setUp(self, get_grid_mock):
         self.get_grid_mock = get_grid_mock
-        self.result = invoke('grid', 'get', 'name')
+        self.result = invoke('grid', 'get', '--name', 'name')
 
     def test_get_grid_mock_called_with_correct_ipv4addr(self):
-        args, __ = self.get_grid_mock.call_args
-        self.assertEqual(args[0], 'name')
+        _, kwargs = self.get_grid_mock.call_args
+        self.assertEqual(kwargs['name'], 'name')
 
     def test_get_grid_mock_called_exactly_once(self):
         self.assertEqual(self.get_grid_mock.call_count, 1)
@@ -739,14 +739,107 @@ class GetGridNameWithNameTests(unittest.TestCase):
         self.assertEqual(self.result.exit_code, 0)
 
 
-class GetGridTests(unittest.TestCase):
-    @patch('infoblox.infoblox.Infoblox.get_grid')
-    def setUp(self, delete_fixed_address_mock):
-        self.delete_fixed_address_mock = delete_fixed_address_mock
-        self.result = invoke('grid', 'get')
+class RestartGridServicesWithoutNameTests(unittest.TestCase):
+    @patch('infoblox.infoblox.Infoblox.restart_grid_services')
+    def setUp(self, restart_grid_services_mock):
+        self.restart_grid_services_mock = restart_grid_services_mock
+        self.result = invoke('grid', 'restart_services', 'foo=bar', 'fizz=buzz')
 
-    def test_delete_fixed_address_mock_called_exactly_once(self):
-        self.assertEqual(self.create_fixed_address_mock.call_count, 1)
+    def test_restart_grid_services_mock_called_with_correct_params(self):
+        args, __ = self.restart_grid_services_mock.call_args
+        self.assertEqual(args[0]['foo'], 'bar')
+        self.assertEqual(args[0]['fizz'], 'buzz')
+
+    def test_restart_grid_services_mock_called_exactly_once(self):
+        self.assertEqual(self.restart_grid_services_mock.call_count, 1)
 
     def test_exit_code_is_zero(self):
         self.assertEqual(self.result.exit_code, 0)
+
+
+class RestartGridServicesWithNameTests(unittest.TestCase):
+    @patch('infoblox.infoblox.Infoblox.restart_grid_services')
+    def setUp(self, restart_grid_services_mock):
+        self.restart_grid_services_mock = restart_grid_services_mock
+        self.result = invoke('grid', 'restart_services',
+                             '--name', 'name', 'foo=bar', 'fizz=buzz')
+
+    def test_restart_grid_services_mock_called_with_correct_params(self):
+        args, kwargs = self.restart_grid_services_mock.call_args
+        self.assertEqual(args[0]['foo'], 'bar')
+        self.assertEqual(args[0]['fizz'], 'buzz')
+        self.assertEqual(kwargs['name'], 'name')
+
+    def test_restart_grid_services_mock_called_exactly_once(self):
+        self.assertEqual(self.restart_grid_services_mock.call_count, 1)
+
+    def test_exit_code_is_zero(self):
+        self.assertEqual(self.result.exit_code, 0)
+
+
+class RestartGridServicesNotCalledWithoutParamsTests(unittest.TestCase):
+    @patch('infoblox.infoblox.Infoblox.restart_grid_services')
+    def setUp(self, restart_grid_services_mock):
+        self.restart_grid_services_mock = restart_grid_services_mock
+        self.result = invoke('grid', 'restart_services')
+
+    def test_restart_grid_services_mock_not_called(self):
+        self.assertEqual(self.restart_grid_services_mock.call_count, 0)
+
+    def test_exit_code_is_zero(self):
+        self.assertEqual(self.result.exit_code, 0)
+
+
+class GetGridPendingChangesTests(unittest.TestCase):
+    @patch('infoblox.infoblox.Infoblox.get_pending_changes')
+    def setUp(self, get_pending_changes_mock):
+        self.get_pending_changes_mock = get_pending_changes_mock
+        self.result = invoke('grid', 'pending_changes')
+
+    def test_get_pending_changes_mock_called_exactly_once(self):
+        self.assertEqual(self.get_pending_changes_mock.call_count, 1)
+
+    def test_exit_code_is_zero(self):
+        self.assertEqual(self.result.exit_code, 0)
+
+
+class GetLeaseTests(unittest.TestCase):
+    @patch('infoblox.infoblox.Infoblox.get_lease')
+    def setUp(self, get_lease_mock):
+        self.get_lease_mock = get_lease_mock
+        self.result = invoke('lease', 'get', 'foo=bar', 'fizz=buzz')
+
+    def test_get_lease_mock_called_with_correct_params(self):
+        _, kwargs = self.get_lease_mock.call_args
+        query_params = kwargs['query_params']
+        self.assertEqual(query_params['foo'], 'bar')
+        self.assertEqual(query_params['fizz'], 'buzz')
+
+    def test_get_lease_mock_called_exactly_once(self):
+        self.assertEqual(self.get_lease_mock.call_count, 1)
+
+    def test_exit_code_is_zero(self):
+        self.assertEqual(self.result.exit_code, 0)
+
+
+class GetLeaseNotCalledWithoutParamsTests(unittest.TestCase):
+    @patch('infoblox.infoblox.Infoblox.get_lease')
+    def setUp(self, get_lease_mock):
+        self.get_lease_mock = get_lease_mock
+        self.result = invoke('lease', 'get')
+
+    def test_get_lease_mock_called_exactly_once(self):
+        self.assertEqual(self.get_lease_mock.call_count, 0)
+
+    def test_exit_code_is_zero(self):
+        self.assertEqual(self.result.exit_code, 0)
+
+
+class TestProcessQueryParams(unittest.TestCase):
+    def test_raises_value_error(self):
+        with self.assertRaises(cli.InvalidParameter):
+            cli.process_query_params('test')
+
+    def test_properly_transforms_to_dict(self):
+        params = cli.process_query_params(('fizz=buzz', 'foo=bar'))
+        self.assertDictEqual(params, {'fizz': 'buzz', 'foo': 'bar'})
