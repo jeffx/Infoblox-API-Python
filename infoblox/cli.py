@@ -418,7 +418,7 @@ def grid():
 
 
 @grid.command('get')
-@click.option('--name', default=None)
+@grid.option('--name', default=None)
 @click.pass_obj
 def get_grid(api, name):
     click.echo('Getting Grid.')
@@ -430,10 +430,13 @@ def get_grid(api, name):
               help=('QUERY_PARAMS: Specified as key=value items'
                     ' separated by a space. Ex:'
                     ' name=test network_view=default'))
-@click.argument('query_params', nargs=-1)
-@click.option('--name', default=None)
+@grid.argument('query_params', nargs=-1)
+@grid.option('--name', default=None)
 @click.pass_obj
 def restart_grid_services(api, query_params, name):
+    if len(query_params) == 0:
+        click.echo('Please provide query_params. See help for more info.')
+        return
     params = process_query_params(query_params)
     click.echo('Restarting Grid Services..')
     click.echo(api.get_grid(params, name=name))
@@ -456,9 +459,12 @@ def lease():
                help=('QUERY_PARAMS: Specified as key=value items'
                      ' separated by a space. Ex:'
                      ' name=test network_view=default'))
-@click.argument('query_params', nargs=-1)
+@lease.argument('query_params', nargs=-1)
 @click.pass_obj
 def get_lease(api, query_params):
+    if len(query_params) == 0:
+        click.echo('Please provide query_params. See help for more info.')
+        return
     params = process_query_params(query_params)
     click.echo('Getting Lease.')
     click.echo(api.get_lease(query_params=params))
@@ -466,9 +472,6 @@ def get_lease(api, query_params):
 
 def process_query_params(query_params):
     '''Format tuple params as dict'''
-    if len(query_params) == 0:
-        click.echo('Please provide query_params. See help for more info.')
-        return
     params = {}
     for q in query_params:
         try:
