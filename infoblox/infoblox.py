@@ -978,8 +978,7 @@ class Infoblox(object):
                     if attributes:
                         for attribute in attributes:
                             if attribute in r_json[0]['extattrs']:
-                                extattrs[attribute] = \
-                                    r_json[0]['extattrs'][attribute]['value']
+                                extattrs[attribute] = r_json[0]['extattrs'][attribute]['value']
                             else:
                                 raise InfobloxNotFoundException(
                                     "No requested attribute found: " + attribute)

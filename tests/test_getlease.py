@@ -17,7 +17,7 @@ class TestGetLease(testcasefixture.TestCaseWithFixture):
     def test_get_lease(self):
         responses.add(responses.GET, self.get_url, body=self.body, status=200)
         self.lease = self.iba_ipa.get_lease(query_params=self.query_params)
-        self.assertListEqual(self.lease, [])
+        self.assertEqual(self.lease[0]['address'], self.query_params['address'])
 
     @responses.activate
     def test_get_ip_by_hostnotfound(self):
