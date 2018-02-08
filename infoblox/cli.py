@@ -418,7 +418,7 @@ def grid():
 
 
 @grid.command('get')
-@grid.option('--name', default=None)
+@click.option('--name', default=None)
 @click.pass_obj
 def get_grid(api, name):
     click.echo('Getting Grid.')
@@ -430,8 +430,8 @@ def get_grid(api, name):
               help=('QUERY_PARAMS: Specified as key=value items'
                     ' separated by a space. Ex:'
                     ' name=test network_view=default'))
-@grid.argument('query_params', nargs=-1)
-@grid.option('--name', default=None)
+@click.argument('query_params', nargs=-1)
+@click.option('--name', default=None)
 @click.pass_obj
 def restart_grid_services(api, query_params, name):
     if len(query_params) == 0:
@@ -459,7 +459,7 @@ def lease():
                help=('QUERY_PARAMS: Specified as key=value items'
                      ' separated by a space. Ex:'
                      ' name=test network_view=default'))
-@lease.argument('query_params', nargs=-1)
+@click.argument('query_params', nargs=-1)
 @click.pass_obj
 def get_lease(api, query_params):
     if len(query_params) == 0:
