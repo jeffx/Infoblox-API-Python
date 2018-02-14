@@ -1,0 +1,13 @@
+[
+    {
+        "_ref": "grid:servicerestart:request:changedobject/b25lLnJlc3RhcnRfcmVxdWVzdF9jaGFuZ2VkX29iamVjdCQ1MA:changedobject",
+        "action": "CREATED",
+        "changed_properties": [
+            "FixedAddress 192.168.1.10 name=network_view value=default: Set always_update_dns=False,dhcp_client_identifier=\"\",disabled=False,enable_ddns=False,enable_discovery=True,ip_address=\"192.168.1.10\",is_invalid_mac=False,mac_address=\"aa:bb:cc:dd:ee:ff\",match_option=\"MAC_ADDRESS\",ms_server=MsServer:NULL,network_view=NetworkView:default,override_cli_credentials=False,override_credential=False,parent=Network:192.168.1.0/24,network_view=default,prepend_zero=False,use_ddns_domainname=False,use_enable_ddns=False,use_ms_options=False,use_option_logic_filters=False"
+        ],
+        "changed_time": 1517871870,
+        "object_name": "192.168.1.10",
+        "object_type": "fixedaddress",
+        "user_name": "username"
+    }
+]
