@@ -3,7 +3,7 @@ Infoblox Python API CHANGELOG
 
 1.6.2
 ---
-* [Phillip Ferentinos] - Add `get_range` endpoint.
+* [Phillip Ferentinos] - Add `get_dhcp_range` endpoint.
 * [Phillip Ferentinos] - Add support to `Util` class for `delete_by_ref`
 * [Phillip Ferentinos] - Add `create`, `get`, `delete` support for Fixed Addresses
 * [Phillip Ferentinos] - Add `get_grid`, `restart_grid_services`, `get_pending_changes` support for Grid Members
