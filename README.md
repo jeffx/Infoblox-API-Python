@@ -36,7 +36,14 @@ Class **Infoblox** implements the following methods:
 - get_network_extattrs
 - update_network_extattrs
 - delete_network_extattrs
-
+- get_range
+- create_fixed_address
+- get_fixed_address
+- delete_fixed_address
+- get_grid
+- restart_grid_services
+- get_pending_changes
+- get_lease
 * * *
 
 ### How to use
@@ -341,6 +348,64 @@ except Exception as e:
 >        :param attributes: hash table of extensible attributes with attribute
 >            name as a hash key
 
+
+
+##### `get_dhcp_range(self, network, fields=None, not_found_fail=True)`
+
+> Implements IBA REST API call to retrieve a DHCP Range by CIDR network
+>        :param network: Network (in CIDR format) to get the DHCP Range for
+
+
+
+##### `create_fixed_address(self, ipv4addr, mac, fields=None, confirm=True`
+
+> Implements IBA REST API call to create a Fixed Address Record
+>        :param ipv4addr: IPv4 Address of object to put on the Record
+>        :param mac: Mac Address of object to put on the Record
+
+
+
+##### `get_fixed_address(self, ipv4addr, mac, fields=None, not_found_fail=True)`
+
+> Implements IBA REST API call to get a Fixed Address Record
+>         :param ipv4addr: IPv4 Address of object to get
+>         :param mac: Mac Address of object to get
+
+
+
+##### `delete_fixed_address(self, ipv4addr, mac, not_found_fail=True)`
+
+> Implements IBA REST API call to delete a Fixed Address Record
+>         :param ipv4addr: IPv4 Address of object to delete
+>         :param mac: Mac Address of object to delete
+
+
+
+##### `get_grid(self, name=None, fields=None, not_found_fail=True)`
+
+> Implements IBA REST API call to det a Grid Object
+>         :param query_params: Dictionary of searchable fields on Grid object.
+>         :param fields: Fields to return from the Grid object
+
+
+##### `restart_grid_services(self, payload, name=None)`
+
+> Implements IBA REST API call to restart Grid Services
+>         :param name: Name of a Grid object.
+>         :param payload: Dictionary of fields used to restart services.
+
+
+##### `get_pending_changes(self, fields=None, notFoundFail=False)`
+
+> Implements IBA REST API call to get pending changes on the Grid
+
+
+##### `get_lease(self, query_params=None, fields=None, not_found_fail=True)`
+
+> Implements IBA REST API call to retrieve a DHCP Lease
+>         :param query_params: dictionary of fields to query lease against
+>         :param fields: comma-separated list of field names (optional)
+>         :param not_found_fail: Raise an exception if nothing is found.
 
 
 ## infoblox.infoblox.InfobloxBadInputParameter Objects

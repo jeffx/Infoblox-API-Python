@@ -116,6 +116,14 @@ class Infoblox(object):
     get_network_extattrs
     update_network_extattrs
     delete_network_extattrs
+    get_range
+    create_fixed_address
+    get_fixed_address
+    delete_fixed_address
+    get_grid
+    restart_grid_services
+    get_pending_changes
+    get_lease
     """
 
     def __init__(self,
@@ -978,8 +986,7 @@ class Infoblox(object):
                     if attributes:
                         for attribute in attributes:
                             if attribute in r_json[0]['extattrs']:
-                                extattrs[attribute] = \
-                                    r_json[0]['extattrs'][attribute]['value']
+                                extattrs[attribute] = r_json[0]['extattrs'][attribute]['value']
                             else:
                                 raise InfobloxNotFoundException(
                                     "No requested attribute found: " + attribute)
@@ -1306,7 +1313,10 @@ class Infoblox(object):
     def update_record(self, record, fields, confirm):
         self.util.put(record, fields, confirm)
 
-    def get_range(self, network, fields=None, not_found_fail=True):
+    def get_dhcp_range(self, network, fields=None, not_found_fail=True):
+        """Retrieve a DHCP Range by CIDR network
+        :param network: Network (in CIDR format) to get the DHCP Range for
+        """
         r_json = self.util.get(
             'range',
             query_params={
@@ -1314,6 +1324,114 @@ class Infoblox(object):
             },
             fields=fields,
             notFoundText="No requested network found: " + network,
+            notFoundFail=not_found_fail
+        )
+
+        return r_json
+
+    def create_fixed_address(self, ipv4addr, mac,
+                             fields=None, confirm=True):
+        """Create a Fixed Address Record
+        :param ipv4addr: IPv4 Address of object to put on the Record
+        :param mac: Mac Address of object to put on the Record
+        """
+        r_json = self.util.post(
+            'fixedaddress',
+            payload={
+                'mac': mac,
+                'ipv4addr': ipv4addr,
+            },
+            fields=fields,
+            confirm=confirm
+        )
+        return r_json
+
+    def get_fixed_address(self, ipv4addr, mac,
+                          fields=None, not_found_fail=True):
+        """Get a Fixed Address Record
+        :param ipv4addr: IPv4 Address of object to get
+        :param mac: Mac Address of object to get
+        """
+        notFoundText = "Fixed Address not found for IP: %s, MAC: %s" % (ipv4addr, mac)
+        r_json = self.util.get(
+            'fixedaddress',
+            query_params={
+                'mac': mac,
+                'ipv4addr': ipv4addr,
+            },
+            fields=fields,
+            notFoundText=notFoundText,
+            notFoundFail=not_found_fail
+        )
+        return r_json
+
+    def delete_fixed_address(self, ipv4addr, mac, not_found_fail=True):
+        """Delete a Fixed Address Record
+        :param ipv4addr: IPv4 Address of object to delete
+        :param mac: Mac Address of object to delete
+        """
+        ref = self.get_fixed_address(ipv4addr=ipv4addr, mac=mac, not_found_fail=not_found_fail)
+        notFoundText = "Fixed Address not found for ref: %s" % (ref)
+        r_json = self.util.delete_by_ref(
+            ref[0]['_ref'],
+            notFoundText=notFoundText,
+            notFoundFail=not_found_fail
+        )
+        return r_json
+
+    def get_grid(self, name=None, fields=None, not_found_fail=True):
+        """Get a Grid Object
+        :param query_params: Dictionary of searchable fields on Grid object.
+        :param fields: Fields to return from the Grid object
+        """
+        query_params = None
+        if name is not None:
+            query_params = {'name': name}
+        notFoundText = "No grid found."
+        r_json = self.util.get(
+            'grid',
+            query_params=query_params,
+            fields=fields,
+            notFoundText=notFoundText,
+            notFoundFail=not_found_fail
+        )
+        return r_json
+
+    def restart_grid_services(self, payload, name=None):
+        """Restart Grid Services
+        :param name: Name of a Grid object.
+        :param payload: Dictionary of fields used to restart services.
+        """
+        ref = self.get_grid(name=name)
+        uri = '%s?_function=restartservices' % ref[0]['_ref']
+        r_json = self.util.post(
+            uri=uri,
+            payload=payload,
+            fields=None
+        )
+        return r_json
+
+    def get_pending_changes(self, fields=None, notFoundFail=False):
+        """ Get pending changes on the Grid
+        """
+        r_json = self.util.get(
+            uri='grid:servicerestart:request:changedobject',
+            fields=fields,
+            notFoundFail=notFoundFail,
+        )
+        return r_json
+
+    def get_lease(self, query_params=None, fields=None, not_found_fail=True):
+        """Retrieve a DHCP Lease
+        :param query_params: dictionary of fields to query lease against
+        :param fields: comma-separated list of field names (optional)
+        :param not_found_fail: Raise an exception if nothing is found.
+        """
+        r_json = self.util.get(
+            'lease',
+            query_params=query_params,
+            fields=fields,
+            notFoundText="No Lease found.",
             notFoundFail=not_found_fail
         )
 
@@ -1453,6 +1571,39 @@ class Util(object):
             r_json = r.json()
             if r.status_code == 200 or r.status_code == 201:
                 return r_json
+            else:
+                if 'text' in r_json:
+                    raise InfobloxGeneralException(r_json['text'])
+                else:
+                    r.raise_for_status()
+        except ValueError:
+            raise InfobloxGeneralException(r)
+
+    def delete_by_ref(self, ref, notFoundText=None, notFoundFail=True):
+        """Execute a get operation.
+        :param ref: Reference to object to delete.
+        :param notFoundText: Exception text when get returns no data.
+        :param notFoundFail: Raise an exception if nothing is found.
+        """
+
+        rest_url = 'https://%s/wapi/v%s/%s' % (self.iba_host, self.iba_wapi_version, ref)
+
+        try:
+            r = self.session.delete(url=rest_url)
+        except requests.exceptions.HTTPError as e:
+            if notFoundFail:
+                raise InfobloxNotFoundException(notFoundText)
+            else:
+                raise e
+            r_json = r.json()
+
+            if r.status_code == 200:
+                if len(r_json) > 0:
+                    return r_json
+                elif notFoundFail:
+                    raise InfobloxNotFoundException(notFoundText)
+                else:
+                    return None
             else:
                 if 'text' in r_json:
                     raise InfobloxGeneralException(r_json['text'])
