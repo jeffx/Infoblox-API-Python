@@ -36,7 +36,14 @@ Class **Infoblox** implements the following methods:
 - get_network_extattrs
 - update_network_extattrs
 - delete_network_extattrs
-
+- get_dhcp_range
+- create_fixed_address
+- get_fixed_address
+- delete_fixed_address
+- get_grid
+- restart_grid_services
+- get_pending_changes
+- get_lease
 * * *
 
 ### How to use
