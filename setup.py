@@ -1,7 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-from pip.req import parse_requirements
-from pip.download import PipSession
+
+try:  # for pip >= 10
+    from pip._internal.req import parse_requirements
+except ImportError:  # for pip <= 9.0.3
+    from pip.req import parse_requirements
+
 try:
     from setuptools import setup
 except ImportError:
@@ -16,7 +20,7 @@ with open('CHANGELOG.md') as changelog_file:
 
 
 def get_requirements(filepath):
-    analysis = parse_requirements(filepath, session=PipSession())
+    analysis = parse_requirements(filepath, session='install')
     return [str(requirement.req) for requirement in analysis]
 
 
@@ -26,7 +30,7 @@ test_requirements = get_requirements('testing_requirements.txt')
 
 setup(
     name='infoblox_cli',
-    version='1.6.2',
+    version='1.6.3',
     description='The module implements Infoblox IPAM API via REST API.',
     long_description=readme + '\n\n' + changelog,
     author="Equifax CIA",
