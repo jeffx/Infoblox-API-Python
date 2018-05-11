@@ -1,6 +1,10 @@
 Infoblox Python API CHANGELOG
 =============================
 
+1.6.3
+---
+* [Frank Branham] - Fix pip 10 internal dependencies in setup.py
+
 1.6.2
 ---
 * [Phillip Ferentinos] - Add `get_dhcp_range` endpoint.
