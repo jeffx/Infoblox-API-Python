@@ -1,6 +1,10 @@
 Infoblox Python API CHANGELOG
 =============================
 
+1.7.0
+---
+* [David Yoon] - Add the ability to change a comment for a network obj and fix a bug with extensible attributes
+
 1.6.3
 ---
 * [Frank Branham] - Fix pip 10 internal dependencies in setup.py
