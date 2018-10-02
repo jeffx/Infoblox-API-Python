@@ -1026,7 +1026,10 @@ class Infoblox(object):
                     if network_ref:
                         extattrs = r_json[0]['extattrs']
                         for attr_name, attr_value in attributes.iteritems():
-                            extattrs[attr_name]['value'] = attr_value
+                            if attr_name in extattrs:
+                                extattrs[attr_name]['value'] = attr_value
+                            else:
+                                extattrs.update({attr_name : {"value" : attr_value}})
                         payload = '{"extattrs": ' + \
                             json.JSONEncoder().encode(extattrs) + '}'
                         rest_url = 'https://' + self.iba_host + \
@@ -1099,6 +1102,52 @@ class Infoblox(object):
                     r.raise_for_status()
         except ValueError:
             raise InfobloxGeneralException(r)
+
+
+    def comment_network(self, network, comment):
+        """ Implements IBA REST API call to replace the comment field in a network object
+        :param network: network in CIDR format
+        :param comment: new comment
+        """
+        rest_url = 'https://' + self.iba_host + '/wapi/v' + \
+            self.iba_wapi_version + '/network?network=' + \
+            network + '&network_view=' + self.iba_network_view + \
+            '&_return_fields=network,extattrs'
+        extattrs = {}
+        try:
+            r = self.session.get(url=rest_url)
+            r_json = r.json()
+            if r.status_code == 200:
+                if len(r_json) > 0:
+                    network_ref = r_json[0]['_ref']
+                    if network_ref:
+                        payload = '{"comment": ' + \
+                            json.JSONEncoder().encode(comment) + '}'
+                        rest_url = 'https://' + self.iba_host + \
+                            '/wapi/v' + self.iba_wapi_version + \
+                            '/' + network_ref
+                        r = self.session.put(url=rest_url, data=payload)
+                        if r.status_code == 200:
+                            return
+                        else:
+                            if 'text' in r_json:
+                                raise InfobloxGeneralException(r_json['text'])
+                            else:
+                                r.raise_for_status()
+                    else:
+                        raise InfobloxGeneralException(
+                            "No network reference received in IBA reply for network: " + network)
+                else:
+                    raise InfobloxNotFoundException(
+                        "No requested network found: " + network)
+            else:
+                if 'text' in r_json:
+                    raise InfobloxGeneralException(r_json['text'])
+                else:
+                    r.raise_for_status()
+        except ValueError:
+            raise InfobloxGeneralException(r)
+
 
     def create_network(self, network):
         """ Implements IBA REST API call to create DHCP network object
