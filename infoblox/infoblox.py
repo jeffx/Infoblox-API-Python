@@ -1025,11 +1025,11 @@ class Infoblox(object):
                     network_ref = r_json[0]['_ref']
                     if network_ref:
                         extattrs = r_json[0]['extattrs']
-                        for attr_name, attr_value in attributes.iteritems():
+                        for attr_name, attr_value in attributes.items():
                             if attr_name in extattrs:
                                 extattrs[attr_name]['value'] = attr_value
                             else:
-                                extattrs.update({attr_name : {"value" : attr_value}})
+                                extattrs.update({attr_name: {"value": attr_value}})
                         payload = '{"extattrs": ' + \
                             json.JSONEncoder().encode(extattrs) + '}'
                         rest_url = 'https://' + self.iba_host + \

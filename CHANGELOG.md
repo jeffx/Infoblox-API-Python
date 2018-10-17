@@ -1,6 +1,10 @@
 Infoblox Python API CHANGELOG
 =============================
 
+?.?.?
+---
+* [Jimmy Campbell] - Fix `update_network_extattrs` to use `items()` instead of `iteritems()`
+
 1.7.0
 ---
 * [David Yoon] - Add the ability to change a comment for a network obj and fix a bug with extensible attributes
