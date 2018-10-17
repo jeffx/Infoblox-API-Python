@@ -30,7 +30,7 @@ test_requirements = get_requirements('testing_requirements.txt')
 
 setup(
     name='infoblox_cli',
-    version='1.7.0',
+    version='1.7.1',
     description='The module implements Infoblox IPAM API via REST API.',
     long_description=readme + '\n\n' + changelog,
     author="Equifax CIA",

@@ -1,7 +1,7 @@
 Infoblox Python API CHANGELOG
 =============================
 
-?.?.?
+1.7.1
 ---
 * [Jimmy Campbell] - Fix `update_network_extattrs` to use `items()` instead of `iteritems()`
 
